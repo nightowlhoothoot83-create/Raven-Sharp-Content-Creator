@@ -89,6 +89,16 @@ R2_BUCKET     = os.environ.get("R2_BUCKET", "adg-images")
 if not (R2_ENDPOINT and R2_ACCESS_KEY and R2_SECRET_KEY):
     _startup_warnings.append("R2 storage is not fully configured — brand asset uploads will fail until set.")
 
+# Cheap model for script/prompt drafting — same Gemini model Book Creator uses.
+# Keeps iteration free-ish; the expensive provider call only fires once the
+# user is happy with the script and asks for the actual render.
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+if not GEMINI_API_KEY:
+    _startup_warnings.append(
+        "GEMINI_API_KEY was not set — /api/generate/script will return a clear 500 error. "
+        "Set it to enable cheap script/prompt drafting before the expensive provider render."
+    )
+
 for _w in _startup_warnings:
     log.warning("STARTUP: %s", _w)
 
@@ -249,6 +259,21 @@ async def upload_to_r2(file_bytes: bytes, key_prefix: str, filename: str, mime: 
         log.error(f"R2 upload failed: {e}")
         return ""
 
+async def gemini_text(prompt: str) -> str:
+    """Cheap step — script/prompt drafting. Same model Book Creator uses."""
+    if not GEMINI_API_KEY:
+        raise HTTPException(500, "Server misconfigured: GEMINI_API_KEY not set")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
+    body = {"contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.8, "maxOutputTokens": 4096}}
+    async with httpx.AsyncClient(timeout=60) as c:
+        r = await c.post(url, json=body)
+        if not r.is_success:
+            raise HTTPException(502, f"Gemini text error {r.status_code}: {r.text[:300]}")
+        d = r.json()
+        parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])
+        return parts[0].get("text", "") if parts else ""
+
 # ── Provider abstraction ─────────────────────────────────────────────────────
 # STATUS (verified during backend build):
 #   - higgsfield: REAL integration below, using the official `higgsfield-client`
@@ -350,6 +375,10 @@ class AssetUploadIn(BaseModel):
     image_base64: str
     mime: str = "image/png"
     filename: str = "asset"
+
+class GenerateScriptIn(BaseModel):
+    brief: str
+    brand_profile_id: Optional[str] = None
 
 class GenerateVideoIn(BaseModel):
     provider: str                       # "invideo" | "higgsfield" | "meta"
@@ -581,6 +610,19 @@ async def _resolve_brand_context(brand_profile_id: Optional[str], user_id: str) 
         char_lines = [f"- {c.get('name','')}: {c.get('description','')}" for c in profile["characters"]]
         lines.append("Established characters (keep consistent):\n" + "\n".join(char_lines))
     return "\n".join(lines)
+
+@api.post("/generate/script")
+async def generate_script_endpoint(payload: GenerateScriptIn, user: dict = Depends(get_user)):
+    """Cheap step (Gemini) — draft/iterate on the script for free before
+    spending credits on an actual Higgsfield/InVideo/Meta render. No
+    generation-limit check here on purpose; only the real render below
+    counts against the monthly video quota."""
+    context = await _resolve_brand_context(payload.brand_profile_id, user["id"])
+    full_prompt = (
+        f"{context}\n\n" if context else ""
+    ) + f"Write a short-form video script for: {payload.brief}\n\nFormat as scene-by-scene beats with on-screen text and voiceover lines."
+    script = await gemini_text(full_prompt)
+    return {"script": script}
 
 @api.post("/generate/video")
 async def generate_video_endpoint(payload: GenerateVideoIn, user: dict = Depends(get_user)):
