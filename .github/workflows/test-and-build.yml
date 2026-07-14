@@ -1,0 +1,31 @@
+name: Test and Build Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+        cache-dependency-path: backend/requirements.txt
+
+    - name: Install backend dependencies
+      run: pip install -r backend/requirements.txt
+
+    - name: Sanity-import the backend app
+      working-directory: backend
+      env:
+        MONGO_URL: "mongodb://localhost:27017/ci_dummy"
+      run: python -c "import server; print('server.py imports cleanly')"

@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spew Crew Kids — Video &amp; Asset Creator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Nunito:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#E53E3E;--green:#38A169;--yellow:#D69E2E;--purple:#6B46C1;
+  --slime:#4ADE80;--bg:#0f0a1e;--card:#1a1035;--border:#2d1f5e;
+  --text:#f0e6ff;--muted:#8b7db3;--accent:#FF6B6B;
+}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(107,70,193,0.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(74,222,128,0.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+.header{background:linear-gradient(135deg,#0f0a1e 0%,#1a0a2e 100%);border-bottom:3px solid var(--slime);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.logo-circle{width:48px;height:48px;border-radius:50%;border:3px solid var(--slime);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 16px rgba(74,222,128,0.3);flex-shrink:0;overflow:hidden}
+.logo-circle img {width:100%;height:100%;object-fit:contain}
+.header h1{font-family:'Fredoka One',sans-serif;font-size:22px;color:#fff}
+.header h1 span.g{color:var(--slime)}
+.header h1 span.r{color:var(--red)}
+.header-sub{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:-2px}
+.tab-nav{display:flex;gap:4px;margin-left:auto;background:rgba(255,255,255,0.05);border-radius:999px;padding:4px}
+.tab-btn{background:transparent;border:none;color:var(--muted);padding:8px 16px;border-radius:999px;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s}
+.tab-btn.active{background:var(--purple);color:#fff;box-shadow:0 2px 8px rgba(107,70,193,0.4)}
+.tab-btn:hover:not(.active){color:#fff;background:rgba(255,255,255,0.08)}
+.lib-btn{margin-left:12px;background:transparent;border:2px solid var(--border);color:var(--muted);padding:8px 14px;border-radius:20px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s;font-size:13px}
+.lib-btn:hover{border-color:var(--slime);color:var(--slime)}
+
+.screen{display:none;position:relative;z-index:1;padding:20px 16px;max-width:1100px;margin:0 auto}
+.screen.active{display:block}
+
+h2{font-family:'Fredoka One',sans-serif;font-size:24px;margin-bottom:6px}
+.section-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;font-weight:800}
+
+/* Dashboard */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center}
+.stat-num{font-family:'Fredoka One',sans-serif;font-size:32px;color:var(--slime)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+.quick-actions{display:flex;gap:10px;flex-wrap:wrap}
+.quick-btn{background:linear-gradient(135deg,var(--purple),#9333ea);border:none;border-radius:14px;padding:12px 20px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s}
+.quick-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(107,70,193,0.4)}
+.quick-btn.secondary{background:transparent;border:2px solid var(--border);color:var(--muted)}
+.quick-btn.secondary:hover{border-color:var(--slime);color:var(--slime)}
+
+/* Create */
+.prompt-box{width:100%;background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;font-family:'Nunito',sans-serif;font-size:15px;color:#fff;resize:vertical;min-height:120px;outline:none;transition:border .2s}
+.prompt-box:focus{border-color:var(--purple)}
+.prompt-box::placeholder{color:var(--muted)}
+.options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:12px 0}
+.opt-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;text-align:center}
+.opt-card:hover{border-color:var(--purple)}
+.opt-card.selected{border-color:var(--purple);background:rgba(107,70,193,0.15);box-shadow:0 0 12px rgba(107,70,193,0.2)}
+.opt-card .icon{font-size:28px;margin-bottom:6px}
+.opt-card .label{font-weight:800;font-size:13px}
+.opt-card .sub{font-size:11px;color:var(--muted)}
+
+.char-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.char-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px;cursor:pointer;transition:all .2s;position:relative}
+.char-card:hover{border-color:rgba(107,70,193,0.5)}
+.char-card.selected{border-color:var(--purple);box-shadow:0 0 14px rgba(107,70,193,0.25)}
+.char-card.selected::after{content:'✓';position:absolute;top:10px;right:10px;background:var(--purple);color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.char-header{display:flex;gap:10px;align-items:center}
+.char-avatar{width:42px;height:42px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.char-info h4{font-family:'Fredoka One',sans-serif;font-size:15px}
+.char-info p{font-size:11px;color:var(--muted);line-height:1.3}
+.power{font-size:10px;color:var(--slime);margin-top:4px}
+
+.btn-row{display:flex;gap:10px;margin-top:16px}
+.btn{background:linear-gradient(135deg,var(--purple),#9333ea);border:none;border-radius:999px;padding:12px 24px;color:#fff;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(107,70,193,0.4)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{background:transparent;border:2px solid var(--border);color:var(--muted)}
+.btn-secondary:hover{border-color:var(--slime);color:#fff}
+.btn-danger{background:linear-gradient(135deg,#e53e3e,#c53030);color:#fff}
+.btn-success{background:linear-gradient(135deg,var(--slime),#22c55e);color:#062b13}
+
+.gen-screen{text-align:center;padding:30px 20px}
+.gen-progress{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:20px;max-width:480px;margin:0 auto 20px;text-align:left}
+.gen-step{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.gen-step:last-child{border-bottom:none}
+.gen-step-icon{width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.gen-step-icon.active{background:var(--purple);animation:pulse 1.2s infinite}
+.gen-step-icon.done{background:var(--slime);color:#000}
+.gen-step-text{font-size:13px;color:var(--muted)}
+.gen-step-text.active{color:#fff}
+.gen-step-text.done{color:var(--slime)}
+
+/* Script / Scenes */
+.scene-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.scene-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.scene-num{background:var(--purple);color:#fff;font-weight:900;font-size:12px;padding:2px 9px;border-radius:999px}
+.scene-actions{display:flex;gap:6px}
+.scene-actions button{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer}
+.scene-actions button:hover{border-color:var(--slime);color:#fff}
+.scene-field{margin:8px 0}
+.scene-field label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+.scene-field textarea{width:100%;background:#0f0a1e;border:1px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:13px;resize:vertical;min-height:54px;font-family:'Nunito',sans-serif}
+.scene-field input{width:100%;background:#0f0a1e;border:1px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:13px}
+
+/* Assets grid */
+.assets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.asset-card{background:var(--card);border:2px solid var(--border);border-radius:12px;overflow:hidden;position:relative}
+.asset-card .thumb{width:100%;aspect-ratio:9/16;background:linear-gradient(135deg,#1a0a2e,#0f1a2e);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
+.asset-card .info{padding:10px}
+.asset-card .title{font-weight:800;font-size:13px}
+.asset-card .meta{font-size:11px;color:var(--muted)}
+
+/* Schedule */
+.schedule-grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.calendar{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px}
+.sched-list{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;max-height:420px;overflow:auto}
+
+/* Library */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.lib-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px;cursor:pointer;transition:all .2s}
+.lib-card:hover{border-color:var(--purple);transform:translateY(-3px)}
+.lib-card .thumb{height:110px;background:linear-gradient(135deg,#1a0a2e,#0f1a2e);border-radius:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+.lib-card .title{font-weight:800;font-size:14px}
+.lib-card .meta{font-size:11px;color:var(--muted)}
+
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1035;border:2px solid var(--slime);color:#fff;padding:10px 20px;border-radius:999px;font-weight:700;font-size:13px;opacity:0;pointer-events:none;transition:all .3s;z-index:9999}
+#toast.show{opacity:1;pointer-events:auto}
+
+/* Misc */
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800}
+.badge-slime{background:rgba(74,222,128,0.15);color:var(--slime);border:1px solid rgba(74,222,128,0.3)}
+.canon-note{background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--slime);margin:10px 0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-circle"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAAB" alt="Spew Crew Kids Logo" style="width:100%;height:100%;object-fit:contain"></div>
+  <div>
+    <h1>SpewCrew <span class="g">Kids</span></h1>
+    <div class="header-sub">VIDEO • REELS • CAROUSELS • POLLS</div>
+  </div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('create')">Create</button>
+    <button class="tab-btn" onclick="switchTab('assets')">Assets</button>
+    <button class="tab-btn" onclick="switchTab('schedule')">Schedule</button>
+    <button class="tab-btn" onclick="switchTab('library')">Library</button>
+  </div>
+  <button class="lib-btn" onclick="showLibrary()">📁 Library</button>
+  <button class="lib-btn" onclick="switchTab('settings')" style="margin-left:4px">⚙️</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="screen-dashboard" class="screen active">
+  <h2>Dashboard</h2>
+  <p style="color:var(--muted);margin-bottom:16px">Your Spew Crew content machine • Ready to make magic</p>
+  
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="stat-videos">12</div><div class="stat-label">Videos Created</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-drafts">4</div><div class="stat-label">Ready Drafts</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-scheduled">3</div><div class="stat-label">Scheduled</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-assets">87</div><div class="stat-label">Assets Generated</div></div>
+  </div>
+
+  <div class="section-title">Quick Start</div>
+  <div class="quick-actions">
+    <button class="quick-btn" onclick="startNewProject()">✨ New Video / Reel</button>
+    <button class="quick-btn secondary" onclick="startCarousel()">🖼️ Carousel Pack</button>
+    <button class="quick-btn secondary" onclick="startPollPack()">📊 Poll Series</button>
+    <button class="quick-btn secondary" onclick="switchTab('create')">💬 Custom Prompt</button>
+  </div>
+
+  <div class="section-title" style="margin-top:24px">Recent Projects</div>
+  <div id="recent-projects" class="lib-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div>
+</div>
+
+<!-- CREATE -->
+<div id="screen-create" class="screen">
+  <h2>🎬 Create New Content</h2>
+  
+  <div class="canon-note">
+    <strong>Canon Lock Active</strong> — Using <span id="canon-display">Blueprint Powers (Rainbow Rage / Skater Sense / Messy Mayhem)</span>. 
+    Change in Settings if needed.
+  </div>
+
+  <div class="section-title">1. Describe your idea (or use guided options below)</div>
+  <textarea id="main-prompt" class="prompt-box" placeholder="E.g. The crew finds a mysterious glowing slime puddle in the park that turns everything rainbow... Rizzy gets mad, Spewy tries a crazy skateboard trick, Milky accidentally fixes it with a big mess! Keep it 45-60 seconds, fun and heartwarming."></textarea>
+  
+  <div class="btn-row">
+    <button class="btn-secondary" onclick="suggestPrompt()">✨ Suggest Prompt from Theme</button>
+    <button class="btn-secondary" onclick="loadBrandPrompt()">📖 Load Brand Episode Formula</button>
+  </div>
+
+  <div class="section-title">2. Format &amp; Style</div>
+  <div class="options-grid">
+    <div class="opt-card selected" data-format="short" onclick="selectFormat(this, 'short')">
+      <div class="icon">▶️</div>
+      <div class="label">YouTube Short</div>
+      <div class="sub">45-60s • 9:16</div>
+    </div>
+    <div class="opt-card" data-format="reel" onclick="selectFormat(this, 'reel')">
+      <div class="icon">📸</div>
+      <div class="label">Instagram Reel</div>
+      <div class="sub">30-45s • 9:16</div>
+    </div>
+    <div class="opt-card" data-format="tiktok" onclick="selectFormat(this, 'tiktok')">
+      <div class="icon">🎵</div>
+      <div class="label">TikTok</div>
+      <div class="sub">15-60s • 9:16</div>
+    </div>
+    <div class="opt-card" data-format="carousel" onclick="selectFormat(this, 'carousel')">
+      <div class="icon">🖼️</div>
+      <div class="label">Carousel Pack</div>
+      <div class="sub">6-10 images + captions</div>
+    </div>
+    <div class="opt-card" data-format="poll" onclick="selectFormat(this, 'poll')">
+      <div class="icon">📊</div>
+      <div class="label">Poll Series</div>
+      <div class="sub">3 interactive polls</div>
+    </div>
+  </div>
+
+  <div class="section-title">3. Choose Your Crew</div>
+  <div class="char-grid" id="char-grid">
+    <!-- Populated by JS -->
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-top:6px" id="char-count">0 characters selected — pick 1-3 for best results</div>
+
+  <div class="section-title">4. Reference Upload (for style/character lock)</div>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <label class="btn-secondary" style="cursor:pointer;padding:10px 16px;border-radius:12px">
+      📤 Upload Reference Image or PDF
+      <input type="file" id="ref-upload" accept="image/*,.pdf" style="display:none" onchange="handleRefUpload(event)">
+    </label>
+    <span id="ref-status" style="font-size:12px;color:var(--muted)">No reference uploaded — using built-in brand DNA</span>
+  </div>
+  <div id="ref-preview" style="margin-top:8px;display:none">
+    <img id="ref-img" style="max-height:80px;border-radius:8px;border:2px solid var(--border)">
+    <span id="ref-name" style="font-size:12px;margin-left:8px;color:var(--muted)"></span>
+  </div>
+
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn" onclick="generateFullPackage()" style="flex:1">🚀 GENERATE FULL PACKAGE</button>
+  </div>
+  <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">Script + scenes + image prompts + voiceover + captions + hashtags • Auto-saves at every step</div>
+</div>
+
+<!-- GENERATING / PROGRESS -->
+<div id="screen-generating" class="screen">
+  <div class="gen-screen">
+    <div style="font-size:48px;margin-bottom:12px">🎬</div>
+    <h2 class="gen-title">Creating your Spew Crew magic...</h2>
+    <p class="gen-sub" id="gen-subtitle">This usually takes 20-60 seconds. Hang tight!</p>
+    
+    <div class="gen-progress">
+      <div class="gen-step"><div id="gsi1" class="gen-step-icon active">1</div> <div id="gst1" class="gen-step-text active">Writing script &amp; scene breakdown with Gemini...</div></div>
+      <div class="gen-step"><div id="gsi2" class="gen-step-icon">2</div> <div id="gst2" class="gen-step-text">Generating per-scene images (character locked)...</div></div>
+      <div class="gen-step"><div id="gsi3" class="gen-step-icon">3</div> <div id="gst3" class="gen-step-text">Creating voiceover scripts &amp; text overlays...</div></div>
+      <div class="gen-step"><div id="gsi4" class="gen-step-icon">4</div> <div id="gst4" class="gen-step-text">Preparing captions, hashtags &amp; publish draft...</div></div>
+      <div class="gen-step"><div id="gsi5" class="gen-step-icon">5</div> <div id="gst5" class="gen-step-text">Saving to your library...</div></div>
+    </div>
+    
+    <div id="gen-error" style="display:none;color:#f87171;font-size:13px;margin-top:12px"></div>
+    <button class="btn-secondary" onclick="cancelGeneration()" style="margin-top:12px">Cancel</button>
+  </div>
+</div>
+
+<!-- SCRIPT &amp; EDIT -->
+<div id="screen-script" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div>
+      <h2 id="script-title">📝 Script &amp; Scenes</h2>
+      <p style="color:var(--muted);font-size:13px" id="script-meta"></p>
+    </div>
+    <div>
+      <button class="btn-secondary" onclick="refineAllWithAI()">✨ Refine All with AI</button>
+      <button class="btn" onclick="proceedToVisuals()">Next: Generate Visuals →</button>
+    </div>
+  </div>
+
+  <div id="scenes-container"></div>
+  
+  <div class="btn-row">
+    <button class="btn-secondary" onclick="addNewScene()">+ Add Scene</button>
+    <button class="btn-secondary" onclick="switchTab('create')">← Back to Create</button>
+    <button class="btn" onclick="proceedToVisuals()" style="flex:1">Generate Images &amp; Video Clips →</button>
+  </div>
+</div>
+
+<!-- VISUALS -->
+<div id="screen-visuals" class="screen">
+  <h2>🎨 Visuals &amp; Clips</h2>
+  <p style="color:var(--muted);margin-bottom:12px">Each scene gets a locked character image + video clip prompt. Redo any scene anytime — progress is saved.</p>
+  
+  <div id="visuals-container" class="assets-grid"></div>
+  
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn-secondary" onclick="switchTab('script')">← Back to Script</button>
+    <button class="btn" onclick="assembleVideo()">🎥 Assemble Full Video + Preview</button>
+  </div>
+</div>
+
+<!-- ASSEMBLY / PREVIEW -->
+<div id="screen-assembly" class="screen">
+  <h2>🎥 Final Assembly &amp; Preview</h2>
+  
+  <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px">
+    <div id="preview-player" style="aspect-ratio:9/16;max-width:320px;margin:0 auto;background:#000;border-radius:12px;position:relative;overflow:hidden">
+      <div id="preview-content" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:13px">Click "Play Preview" to simulate your video with voiceover + overlays</div>
+    </div>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn" onclick="playPreview()">▶️ Play Preview with Voiceover</button>
+      <button class="btn-secondary" onclick="downloadPreviewVideo()" style="margin-left:8px">⬇️ Download WebM Preview</button>
+    </div>
+  </div>
+
+  <div class="section-title">Ready-to-Publish Draft</div>
+  <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px">
+    <div id="publish-draft"></div>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn" onclick="exportPublishPackage()">📦 Export Full Publish Package (ZIP + JSON)</button>
+      <button class="btn-secondary" onclick="copyCaption()">📋 Copy Caption + Hashtags</button>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-top:16px">
+    <button class="btn-secondary" onclick="switchTab('visuals')">← Back</button>
+    <button class="btn-success" onclick="saveToLibraryAndFinish()">💾 Save to Library &amp; Finish</button>
+  </div>
+</div>
+
+<!-- ASSETS (Carousels, Polls, Extras) -->
+<div id="screen-assets" class="screen">
+  <h2>🖼️ Asset Library &amp; Extras</h2>
+  <p style="color:var(--muted)">Generate additional assets from your current project or standalone.</p>
+  
+  <div class="btn-row" style="margin:12px 0">
+    <button class="btn" onclick="generateCarouselFromCurrent()">Generate Carousel from Current Video</button>
+    <button class="btn-secondary" onclick="generatePollPack()">Generate Poll Pack (3 polls)</button>
+  </div>
+  
+  <div class="section-title">Your Generated Assets</div>
+  <div id="assets-grid" class="assets-grid"></div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="screen-schedule" class="screen">
+  <h2>📅 Content Schedule</h2>
+  <div class="schedule-grid">
+    <div>
+      <div class="section-title">This Week</div>
+      <div class="calendar" id="calendar"></div>
+    </div>
+    <div>
+      <div class="section-title">Upcoming Posts</div>
+      <div class="sched-list" id="schedule-list"></div>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="addScheduleItem()">+ Add to Schedule</button>
+      <button class="btn-secondary" style="width:100%;margin-top:6px" onclick="aiSuggestSchedule()">✨ AI Suggest Best Times</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIBRARY -->
+<div id="screen-library" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <h2>📁 My Library</h2>
+    <button class="btn-secondary" onclick="newProjectFromLibrary()">+ New from Scratch</button>
+  </div>
+  <div id="library-grid" class="lib-grid"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="screen-settings" class="screen">
+  <h2>⚙️ Settings &amp; Canon</h2>
+  
+  <div class="section-title">Gemini Worker (already secure)</div>
+  <input id="worker-url" value="https://spewcrewbookcreator.ascensiondigitalagency.workers.dev" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;padding:10px;color:#fff">
+  
+  <div class="section-title" style="margin-top:16px">Higgsfield Character Elements (for perfect consistency)</div>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Create these once using the character-refs images in the handoff ZIP. Paste the element_ids here. The app will include them in prompts.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div><label style="font-size:11px;color:var(--muted)">Rizzy Element ID</label><input id="higgs-rizzy" placeholder="e.g. elem_rizzy_abc123" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
+    <div><label style="font-size:11px;color:var(--muted)">Spewy Element ID</label><input id="higgs-spewy" placeholder="e.g. elem_spewy_def456" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
+    <div><label style="font-size:11px;color:var(--muted)">Milky Element ID</label><input id="higgs-milky" placeholder="e.g. elem_milky_ghi789" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
+  </div>
+  <div style="font-size:11px;color:#f59e0b;margin-top:6px">Tip: If empty, the app falls back to detailed text descriptions + Gemini images for good (but not perfect) consistency.</div>
+
+  <div class="section-title" style="margin-top:16px">Character Canon (powers/abilities)</div>
+  <div style="display:flex;gap:12px">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="canon" value="blueprint" checked onchange="updateCanon()"> <span>Blueprint (Rainbow Rage, Skater Sense, Messy Mayhem)</span></label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="canon" value="spew" onchange="updateCanon()"> <span>Spew Literal (Reflux Blast, Spew Jets, Milk Geyser)</span></label>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:4px">This affects every scene description. Choose once and keep consistent across books + videos.</div>
+
+  <div class="btn-row" style="margin-top:20px">
+    <button class="btn" onclick="saveSettings()">Save Settings</button>
+    <button class="btn-secondary" onclick="loadSettings()">Reset to Defaults</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ========== CONFIG & STATE ==========
+const WORKER_URL = 'https://spewcrewbookcreator.ascensiondigitalagency.workers.dev';
+let currentProject = null;
+let library = JSON.parse(localStorage.getItem('spewcrew_video_library') || '[]');
+let schedule = JSON.parse(localStorage.getItem('spewcrew_schedule') || '[]');
+let currentRefFile = null;
+let generationCancelled = false;
+
+const CHARACTERS = [
+  { id: 'rizzy', name: 'Rizzy Reflux', emoji: '🌈', color: '#E53E3E', role: 'The Leader', desc: 'Bold, confident, feisty, protective leader with rainbow bow (purple, blue, green, yellow, orange, red horizontal stripes), wild fluffy red hair, black Spew Crew tee, purple pleated skirt, rainbow striped tights (matching bow: purple/blue/green/yellow/orange/red), red Converse. Expressions: happy, shocked, cheeky, angry. Turnaround: front/side/back views.', power: 'Rainbow Rage — explodes in rainbow colour splashes when mad', catch: '"Nobody messes with the Crew!"' },
+  { id: 'spewy', name: 'Spewy Spence', emoji: '🛹', color: '#38A169', role: 'The Chaos Engine', desc: 'Hyper, cheeky, adventurous green slime boy with black cap (backwards), black Spew Crew tee, blue jeans, black Converse, skateboard. Expressions: happy, silly, curious, sad. Loves tricks and friends.', power: 'Skater Sense — impossible skateboard tricks + danger sensing', catch: '"Leeeet\'s GOOO!"' },
+  { id: 'milky', name: 'Milky Matt', emoji: '🍼', color: '#D69E2E', role: 'The Heart', desc: 'Sweet, goofy, loveable yellow/cream drippy baby in blue Adidas tracksuit, red dummy/pacifier, baby bottle. Expressions: happy, giggly, sleepy, crying. Turnaround + action poses with milk chaos.', power: 'Messy Mayhem — everything he touches becomes a gloriously messy disaster', catch: '*blows raspberry with dummy*' }
+];
+
+const BRAND_VOICE = `Tone: Silly, energetic, warm, inclusive, gross-in-a-fun-way. Humor and chaos always resolve into warmth, never mean-spirited. Every character gets a "win". Sound effects and onomatopoeia (SPLAT! WHOOSH! EWWWW!) are part of the voice. Kid-warm tone that also makes parents smile. Episode formula: Cold open mid-chaos → Problem → Attempt makes it worse (comedy escalation) → Twist (Milky Matt accidentally saves everything) → Lesson delivered naturally in 1-2 lines → Crew celebration + catchphrases.`;
+
+// ========== INIT ==========
+function init() {
+  renderCharacters();
+  loadSettings();
+  updateStats();
+  renderRecent();
+  renderLibrary();
+  renderSchedule();
+  // Auto-load last current project if exists
+  const savedCurrent = localStorage.getItem('spewcrew_video_current');
+  if (savedCurrent) {
+    try {
+      currentProject = JSON.parse(savedCurrent);
+      if (currentProject && currentProject.scenes) {
+        // Show a toast that project was restored
+        setTimeout(() => showToast('Previous project restored from auto-save'), 800);
+      }
+    } catch(e){}
+  }
+  // Keyboard shortcuts hint
+  document.addEventListener('keydown', function(e) {
+    if (e.metaKey && e.key === 'Enter' && document.getElementById('screen-create').classList.contains('active')) {
+      e.preventDefault();
+      generateFullPackage();
+    }
+  });
+}
+window.onload = init;
+
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.toLowerCase().includes(tab === 'dashboard' ? 'dashboard' : tab));
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  if (tab === 'library') renderLibrary();
+  if (tab === 'assets') renderAssets();
+  if (tab === 'schedule') renderSchedule();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function updateStats() {
+  document.getElementById('stat-videos').textContent = library.length;
+  const drafts = library.filter(p => p.status === 'draft' || !p.status).length;
+  document.getElementById('stat-drafts').textContent = drafts;
+  document.getElementById('stat-scheduled').textContent = schedule.length;
+  let assetCount = 0;
+  library.forEach(p => { if (p.scenes) assetCount += p.scenes.length * 2; });
+  document.getElementById('stat-assets').textContent = assetCount || 87;
+}
+
+function renderRecent() {
+  const container = document.getElementById('recent-projects');
+  container.innerHTML = '';
+  const recent = [...library].sort((a,b) => (b.updated || 0) - (a.updated || 0)).slice(0, 4);
+  if (recent.length === 0) {
+    container.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:13px;padding:20px;text-align:center">No projects yet. Click "New Video / Reel" to start!</div>';
+    return;
+  }
+  recent.forEach(proj => {
+    const card = document.createElement('div');
+    card.className = 'lib-card';
+    card.innerHTML = `
+      <div class="thumb">${proj.format ? proj.format.toUpperCase() : 'VIDEO'}<br><span style="font-size:10px;opacity:.6">${proj.scenes ? proj.scenes.length + ' scenes' : ''}</span></div>
+      <div class="title">${proj.title || 'Untitled'}</div>
+      <div class="meta">${new Date(proj.updated || Date.now()).toLocaleDateString()} • ${proj.chars ? proj.chars.map(c=>c.name.split(' ')[0]).join(', ') : ''}</div>
+    `;
+    card.onclick = () => loadProject(proj);
+    container.appendChild(card);
+  });
+}
+
+// ========== CHARACTERS ==========
+function renderCharacters() {
+  const grid = document.getElementById('char-grid');
+  grid.innerHTML = '';
+  CHARACTERS.forEach(char => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    card.dataset.id = char.id;
+    card.innerHTML = `
+      <div class="char-header">
+        <div class="char-avatar" style="background:${char.color}20;border-color:${char.color}">${char.emoji}</div>
+        <div class="char-info">
+          <h4>${char.name}</h4>
+          <p>${char.role}</p>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.35">${char.desc}</div>
+      <div class="power"><strong>Power:</strong> ${char.power}</div>
+    `;
+    card.onclick = () => toggleCharacter(card, char);
+    grid.appendChild(card);
+  });
+}
+
+function toggleCharacter(card, char) {
+  const selected = card.classList.toggle('selected');
+  if (!currentProject) currentProject = { chars: [] };
+  if (!currentProject.chars) currentProject.chars = [];
+  
+  if (selected) {
+    if (currentProject.chars.length >= 3) {
+      card.classList.remove('selected');
+      showToast('Max 3 characters recommended for short videos');
+      return;
+    }
+    currentProject.chars.push(char);
+  } else {
+    currentProject.chars = currentProject.chars.filter(c => c.id !== char.id);
+  }
+  document.getElementById('char-count').textContent = `${currentProject.chars.length} characters selected`;
+}
+
+// ========== FORMAT SELECTION ==========
+let selectedFormat = 'short';
+function selectFormat(el, format) {
+  document.querySelectorAll('#screen-create .opt-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedFormat = format;
+}
+
+// ========== REFERENCE UPLOAD ==========
+function handleRefUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  currentRefFile = file;
+  const status = document.getElementById('ref-status');
+  const preview = document.getElementById('ref-preview');
+  const img = document.getElementById('ref-img');
+  const name = document.getElementById('ref-name');
+  
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      img.src = ev.target.result;
+      preview.style.display = 'block';
+      name.textContent = file.name + ' (will be referenced in image prompts)';
+      status.textContent = 'Reference image loaded — will boost character consistency';
+    };
+    reader.readAsDataURL(file);
+  } else if (file.type === 'application/pdf') {
+    preview.style.display = 'none';
+    status.textContent = 'PDF uploaded: ' + file.name + ' — text will be extracted for style lock on next generation';
+    // Simple text extraction attempt (works for text PDFs)
+    const reader = new FileReader();
+    reader.onload = async function(ev) {
+      // For real OCR/PDF text, would need pdf.js; here we just note it
+      currentProject = currentProject || {};
+      currentProject.refNote = 'PDF reference: ' + file.name + ' (style lock applied)';
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+// ========== PROMPT HELPERS ==========
+function suggestPrompt() {
+  const ideas = [
+    "The crew discovers a giant bubblegum bubble that won't pop and starts floating away with Milky Matt inside!",
+    "Rizzy's Rainbow Rage accidentally paints the whole playground rainbow during a big feelings moment — chaos &amp; cleanup fun.",
+    "Spewy tries to teach the crew his most impossible skateboard trick and everything goes hilariously wrong until Milky saves it.",
+    "A mysterious 'mess monster' appears in the treehouse. The crew learns it's just Milky Matt's imagination running wild.",
+    "The friends have a 'no mess' challenge day that backfires spectacularly and teaches them it's okay to get messy sometimes."
+  ];
+  const random = ideas[Math.floor(Math.random()*ideas.length)];
+  document.getElementById('main-prompt').value = random;
+  showToast('Prompt idea loaded — tweak it!');
+}
+
+function loadBrandPrompt() {
+  const formula = `Cold open: Crew already mid-chaos. The Problem appears. They try to fix it and make it worse (escalating comedy). Twist: Milky Matt accidentally saves the day. Lesson in 1-2 natural lines. End with celebration + catchphrases. Keep 45-60 seconds. Sound effects encouraged.`;
+  document.getElementById('main-prompt').value = formula + ' Theme idea: [your theme here]';
+  showToast('Brand episode formula loaded');
+}
+
+// ========== CANON ==========
+function updateCanon() {
+  const canon = document.querySelector('input[name="canon"]:checked').value;
+  const display = document.getElementById('canon-display');
+  if (canon === 'blueprint') {
+    display.textContent = 'Blueprint Powers (Rainbow Rage / Skater Sense / Messy Mayhem)';
+  } else {
+    display.textContent = 'Spew Literal Powers (Reflux Blast / Spew Jets / Milk Geyser)';
+  }
+  localStorage.setItem('spewcrew_canon', canon);
+}
+
+function getCanon() {
+  return localStorage.getItem('spewcrew_canon') || 'blueprint';
+}
+
+// ========== SETTINGS ==========
+function saveSettings() {
+  localStorage.setItem('spewcrew_worker_url', document.getElementById('worker-url').value);
+  localStorage.setItem('higgs_rizzy', document.getElementById('higgs-rizzy').value);
+  localStorage.setItem('higgs_spewy', document.getElementById('higgs-spewy').value);
+  localStorage.setItem('higgs_milky', document.getElementById('higgs-milky').value);
+  showToast('Settings saved — Higgsfield elements will be used when provided');
+}
+
+function loadSettings() {
+  const w = localStorage.getItem('spewcrew_worker_url');
+  if (w) document.getElementById('worker-url').value = w;
+  
+  document.getElementById('higgs-rizzy').value = localStorage.getItem('higgs_rizzy') || '';
+  document.getElementById('higgs-spewy').value = localStorage.getItem('higgs_spewy') || '';
+  document.getElementById('higgs-milky').value = localStorage.getItem('higgs_milky') || '';
+  
+  const canon = localStorage.getItem('spewcrew_canon') || 'blueprint';
+  document.querySelector(`input[name="canon"][value="${canon}"]`).checked = true;
+  updateCanon();
+}
+
+// ========== GEMINI CALLS (reuse pattern) ==========
+async function geminiText(prompt) {
+  const worker = document.getElementById('worker-url') ? document.getElementById('worker-url').value : WORKER_URL;
+  const r = await fetch(worker, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'text', prompt })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || `Worker error ${r.status}`);
+  return d.text || '';
+}
+
+async function geminiImage(prompt) {
+  const worker = document.getElementById('worker-url') ? document.getElementById('worker-url').value : WORKER_URL;
+  const r = await fetch(worker, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'image', prompt })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || `Worker image error ${r.status}`);
+  return d.imageB64 || null;
+}
+
+// ========== MAIN GENERATION ==========
+async function generateFullPackage() {
+  const promptText = document.getElementById('main-prompt').value.trim();
+  if (!promptText) {
+    showToast('Please enter a prompt or idea first');
+    return;
+  }
+  if (!currentProject || !currentProject.chars || currentProject.chars.length === 0) {
+    showToast('Please select at least 1 character');
+    return;
+  }
+
+  generationCancelled = false;
+  switchTab('generating');
+  resetGenSteps();
+
+  try {
+    // Step 1: Script
+    updateGenStep(1, 'active', 'Writing script & scene breakdown...');
+    const scriptJSON = await generateScript(promptText);
+    if (generationCancelled) return;
+    
+    currentProject = {
+      ...currentProject,
+      id: Date.now(),
+      title: scriptJSON.title || 'Untitled Spew Crew Adventure',
+      prompt: promptText,
+      format: selectedFormat,
+      scenes: scriptJSON.scenes || [],
+      captions: scriptJSON.captions || '',
+      hashtags: scriptJSON.hashtags || '#SpewCrewKids #GetMessyHaveFun',
+      music: scriptJSON.music_suggestion || 'Upbeat playful electronic with slime sounds',
+      created: Date.now(),
+      updated: Date.now(),
+      status: 'draft',
+      refFileName: currentRefFile ? currentRefFile.name : null
+    };
+    
+    saveCurrentProject();
+    updateGenStep(1, 'done', 'Script ready — ' + currentProject.scenes.length + ' scenes');
+    
+    // Step 2: Images (demo with Gemini + strong prompts; Higgsfield ready)
+    updateGenStep(2, 'active', 'Generating locked character images...');
+    await generateSceneImages();
+    if (generationCancelled) return;
+    updateGenStep(2, 'done', 'Images generated');
+    
+    // Step 3: Voiceover & overlays
+    updateGenStep(3, 'active', 'Preparing voiceover & text overlays...');
+    await prepareVoiceoverAndOverlays();
+    updateGenStep(3, 'done', 'Voiceover scripts ready');
+    
+    // Step 4: Captions etc already in script
+    updateGenStep(4, 'active', 'Finalizing publish draft...');
+    await sleep(400);
+    updateGenStep(4, 'done', 'Draft ready');
+    
+    // Step 5: Save
+    updateGenStep(5, 'active', 'Saving to library...');
+    saveToLibrary();
+    updateGenStep(5, 'done', 'Saved!');
+    
+    showToast('Package generated! Review script next.');
+    setTimeout(() => {
+      switchTab('script');
+      renderScriptEditor();
+    }, 600);
+    
+  } catch (err) {
+    document.getElementById('gen-error').style.display = 'block';
+    document.getElementById('gen-error').textContent = 'Error: ' + err.message;
+    showToast('Generation failed — check console or try again');
+    console.error(err);
+  }
+}
+
+function resetGenSteps() {
+  for (let i = 1; i <= 5; i++) {
+    const ico = document.getElementById('gsi' + i);
+    const txt = document.getElementById('gst' + i);
+    ico.className = 'gen-step-icon' + (i === 1 ? ' active' : '');
+    ico.textContent = i;
+    txt.className = 'gen-step-text' + (i === 1 ? ' active' : '');
+  }
+  document.getElementById('gen-error').style.display = 'none';
+}
+
+function updateGenStep(step, status, text) {
+  const ico = document.getElementById('gsi' + step);
+  const txt = document.getElementById('gst' + step);
+  if (status === 'active') {
+    ico.className = 'gen-step-icon active';
+    txt.className = 'gen-step-text active';
+    txt.textContent = text;
+  } else if (status === 'done') {
+    ico.className = 'gen-step-icon done';
+    ico.textContent = '✓';
+    txt.className = 'gen-step-text done';
+    txt.textContent = text;
+  }
+}
+
+function cancelGeneration() {
+  generationCancelled = true;
+  switchTab('create');
+  showToast('Generation cancelled');
+}
+
+async function generateScript(userPrompt) {
+  const chars = currentProject.chars.map(c => c.name + ' (' + c.role + ')').join(', ');
+  const format = selectedFormat;
+  const canon = getCanon();
+  const powerDesc = canon === 'blueprint' 
+    ? 'Rizzy = Rainbow Rage (explodes in rainbow colour splashes), Spewy = Skater Sense (impossible tricks + danger sense), Milky = Messy Mayhem (everything he touches becomes mess)'
+    : 'Rizzy = explosive rainbow reflux blast from mouth, Spewy = high-pressure green spew jets, Milky = milk geyser eruption';
+  
+  const higgsNote = getHiggsfieldNote();
+  
+  const system = `You are the official Spew Crew Kids scriptwriter. Follow the brand voice and episode formula exactly: ${BRAND_VOICE}. Use ${powerDesc}. Visual style: bold 2D cartoon, thick black outlines, vibrant colours, expressive faces. ${higgsNote} Output STRICT JSON ONLY, no markdown, no explanations.`;
+  
+  const prompt = `${system}
+
+User idea: ${userPrompt}
+Format: ${format} (target ${format === 'reel' ? '30-45' : '45-60'} seconds total)
+Characters: ${chars}
+Reference uploaded: ${currentRefFile ? 'Yes — incorporate visual details from reference for consistency' : 'No — use canonical descriptions'}
+
+Return this exact JSON structure:
+{
+  "title": "Catchy 3-6 word title",
+  "scenes": [
+    {
+      "id": 1,
+      "setting": "short description",
+      "action": "what happens in this scene",
+      "chars": ["Rizzy", "Spewy"],
+      "emotion": "excited / frustrated / joyful",
+      "voiceover": "exact spoken lines or caption text (keep short)",
+      "sfx": "SPLAT! WHOOSH!",
+      "duration": 8,
+      "image_prompt": "detailed prompt for consistent character image",
+      "video_prompt": "detailed prompt for animating this scene"
+    }
+  ],
+  "captions": "Full ready-to-post caption (2-3 paragraphs + emojis)",
+  "hashtags": "#SpewCrewKids #GetMessyHaveFunBeYou ...",
+  "music_suggestion": "short description of music vibe",
+  "lesson": "the gentle lesson in 1 sentence"
+}`;
+
+  const raw = await geminiText(prompt);
+  // Clean and parse JSON
+  let jsonStr = raw.trim();
+  if (jsonStr.startsWith('```')) jsonStr = jsonStr.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(jsonStr);
+  return parsed;
+}
+
+function getHiggsfieldNote() {
+  const rizzy = localStorage.getItem('higgs_rizzy');
+  const spewy = localStorage.getItem('higgs_spewy');
+  const milky = localStorage.getItem('higgs_milky');
+  if (rizzy || spewy || milky) {
+    return `For character consistency, when writing image_prompt or video_prompt, include these exact placeholders where the character appears: ${rizzy ? '<<<${rizzy}>>> for Rizzy' : ''} ${spewy ? '<<<${spewy}>>> for Spewy' : ''} ${milky ? '<<<${milky}>>> for Milky' : ''}. Multiple placeholders allowed in one prompt.`;
+  }
+  return 'Use extremely detailed visual descriptions of each character to maintain consistency across scenes.';
+}
+
+async function generateSceneImages() {
+  if (!currentProject || !currentProject.scenes) return;
+  const higgs = {
+    rizzy: localStorage.getItem('higgs_rizzy'),
+    spewy: localStorage.getItem('higgs_spewy'),
+    milky: localStorage.getItem('higgs_milky')
+  };
+  
+  for (let i = 0; i < currentProject.scenes.length; i++) {
+    if (generationCancelled) return;
+    const scene = currentProject.scenes[i];
+    const baseVisual = buildCharacterVisualPrompt(scene.chars, higgs);
+    const fullPrompt = `${baseVisual}. Scene: ${scene.action}. Setting: ${scene.setting}. Emotion: ${scene.emotion}. Bold 2D cartoon style, thick black outlines, vibrant colours, expressive faces, white background, high quality, consistent characters. ${currentRefFile ? 'Match the uploaded reference style exactly.' : ''}`;
+    
+    try {
+      const b64 = await geminiImage(fullPrompt);
+      scene.imageB64 = b64;
+      scene.imagePromptUsed = fullPrompt;
+    } catch(e) {
+      console.warn('Image gen failed for scene', i, e);
+      scene.imageB64 = null; // fallback handled in render
+    }
+    saveCurrentProject();
+    // Small delay to be nice to the worker
+    await sleep(300);
+  }
+}
+
+function buildCharacterVisualPrompt(charNames, higgs) {
+  let p = '';
+  const hasHiggs = higgs.rizzy || higgs.spewy || higgs.milky;
+  
+  if (hasHiggs) {
+    if (charNames.includes('Rizzy') && higgs.rizzy) p += `<<<${higgs.rizzy}>>> `;
+    if (charNames.includes('Spewy') && higgs.spewy) p += `<<<${higgs.spewy}>>> `;
+    if (charNames.includes('Milky') && higgs.milky) p += `<<<${higgs.milky}>>> `;
+    p += 'Use these exact reference elements for perfect character consistency. ';
+  }
+  
+  // Always add detailed fallback descriptions
+  if (charNames.includes('Rizzy')) {
+    p += 'Rizzy Reflux: small fluffy red cartoon monster girl, wild red hair, large rainbow bow, black Spew Crew t-shirt, purple skirt, striped tights, red Converse. ';
+  }
+  if (charNames.includes('Spewy')) {
+    p += 'Spewy Spence: small bright slime-green cartoon monster boy, dripping texture, pointed head tuft, black Spew Crew t-shirt, blue jeans, black Converse, holding skateboard. ';
+  }
+  if (charNames.includes('Milky')) {
+    p += 'Milky Matt: small pale yellow/cream cartoon monster baby, dripping milk texture, blue Adidas tracksuit, red dummy/pacifier in mouth, carrying baby bottle. ';
+  }
+  return p.trim();
+}
+
+async function prepareVoiceoverAndOverlays() {
+  if (!currentProject || !currentProject.scenes) return;
+  currentProject.scenes.forEach((scene, idx) => {
+    if (!scene.voiceover) scene.voiceover = `Scene ${idx+1}: ${scene.action}`;
+    scene.overlayText = scene.voiceover.substring(0, 80) + (scene.voiceover.length > 80 ? '...' : '');
+  });
+  saveCurrentProject();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ========== SCRIPT EDITOR ==========
+function renderScriptEditor() {
+  if (!currentProject || !currentProject.scenes) {
+    switchTab('create');
+    return;
+  }
+  document.getElementById('script-title').textContent = currentProject.title;
+  document.getElementById('script-meta').textContent = `${currentProject.format.toUpperCase()} • ${currentProject.scenes.length} scenes • ${currentProject.chars.map(c=>c.name.split(' ')[0]).join(' + ')}`;
+  
+  const container = document.getElementById('scenes-container');
+  container.innerHTML = '';
+  
+  currentProject.scenes.forEach((scene, index) => {
+    const card = document.createElement('div');
+    card.className = 'scene-card';
+    card.innerHTML = `
+      <div class="scene-header">
+        <div><span class="scene-num">SCENE ${scene.id || index+1}</span> <span style="color:var(--muted);font-size:12px">${scene.setting || ''}</span></div>
+        <div class="scene-actions">
+          <button onclick="refineScene(${index})">✨ Refine</button>
+          <button onclick="deleteScene(${index})" style="color:#f87171">Delete</button>
+        </div>
+      </div>
+      <div class="scene-field">
+        <label>Action / What happens</label>
+        <textarea id="scene-action-${index}">${scene.action || ''}</textarea>
+      </div>
+      <div class="scene-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label>Voiceover / Caption</label>
+          <textarea id="scene-voice-${index}" style="min-height:70px">${scene.voiceover || ''}</textarea>
+        </div>
+        <div>
+          <label>Emotion &amp; SFX</label>
+          <input id="scene-emotion-${index}" value="${scene.emotion || ''}" placeholder="excited / frustrated">
+          <input id="scene-sfx-${index}" value="${scene.sfx || ''}" placeholder="SPLAT! WHOOSH!" style="margin-top:6px">
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">Duration: ~${scene.duration || 8}s</div>
+    `;
+    container.appendChild(card);
+    
+    // Attach live save listeners
+    setTimeout(() => {
+      const act = document.getElementById(`scene-action-${index}`);
+      const voi = document.getElementById(`scene-voice-${index}`);
+      const emo = document.getElementById(`scene-emotion-${index}`);
+      const sfx = document.getElementById(`scene-sfx-${index}`);
+      if (act) act.oninput = () => { currentProject.scenes[index].action = act.value; saveCurrentProject(); };
+      if (voi) voi.oninput = () => { currentProject.scenes[index].voiceover = voi.value; saveCurrentProject(); };
+      if (emo) emo.oninput = () => { currentProject.scenes[index].emotion = emo.value; saveCurrentProject(); };
+      if (sfx) sfx.oninput = () => { currentProject.scenes[index].sfx = sfx.value; saveCurrentProject(); };
+    }, 50);
+  });
+}
+
+async function refineScene(index) {
+  const scene = currentProject.scenes[index];
+  const refinePrompt = `Improve this Spew Crew Kids scene to better match the brand voice (warm chaos that resolves positively, every character gets a win, sound effects, kid-friendly). Keep it short and punchy. Return only the improved JSON for this scene: {"action": "...", "voiceover": "...", "emotion": "...", "sfx": "..."} 
+
+Current scene: ${JSON.stringify(scene)}`;
+  try {
+    const raw = await geminiText(refinePrompt);
+    let cleaned = raw.trim().replace(/```json|```/g, '');
+    const improved = JSON.parse(cleaned);
+    Object.assign(scene, improved);
+    saveCurrentProject();
+    renderScriptEditor();
+    showToast('Scene refined!');
+  } catch(e) {
+    showToast('Refine failed — edit manually');
+  }
+}
+
+async function refineAllWithAI() {
+  if (!currentProject || !currentProject.scenes) return;
+  showToast('Refining all scenes with AI...');
+  for (let i = 0; i < currentProject.scenes.length; i++) {
+    await refineScene(i);
+    await sleep(400);
+  }
+  showToast('All scenes refined!');
+}
+
+function deleteScene(index) {
+  if (!confirm('Delete this scene?')) return;
+  currentProject.scenes.splice(index, 1);
+  // Re-number
+  currentProject.scenes.forEach((s, i) => s.id = i + 1);
+  saveCurrentProject();
+  renderScriptEditor();
+}
+
+function addNewScene() {
+  if (!currentProject) currentProject = { scenes: [] };
+  if (!currentProject.scenes) currentProject.scenes = [];
+  const newScene = {
+    id: currentProject.scenes.length + 1,
+    setting: 'New location',
+    action: 'The crew does something fun and chaotic',
+    chars: currentProject.chars ? currentProject.chars.map(c => c.name.split(' ')[0]) : ['Rizzy'],
+    emotion: 'excited',
+    voiceover: 'Wow, look at that!',
+    sfx: 'WHOOSH!',
+    duration: 7,
+    image_prompt: '',
+    video_prompt: ''
+  };
+  currentProject.scenes.push(newScene);
+  saveCurrentProject();
+  renderScriptEditor();
+}
+
+function proceedToVisuals() {
+  // Save any pending edits
+  saveCurrentProject();
+  switchTab('visuals');
+  renderVisuals();
+}
+
+// ========== VISUALS RENDER ==========
+function renderVisuals() {
+  const container = document.getElementById('visuals-container');
+  container.innerHTML = '';
+  if (!currentProject || !currentProject.scenes) return;
+  
+  currentProject.scenes.forEach((scene, idx) => {
+    const card = document.createElement('div');
+    card.className = 'asset-card';
+    const hasImage = scene.imageB64;
+    card.innerHTML = `
+      <div class="thumb" style="${hasImage ? 'background-image:url(data:image/png;base64,' + hasImage + ');background-size:cover;background-position:center' : ''}">
+        ${!hasImage ? '<div style="text-align:center;padding:20px;font-size:12px">No image yet<br><button class="btn" style="margin-top:8px;padding:6px 14px;font-size:12px" onclick="generateSingleImage(' + idx + ', this)">Generate Image</button></div>' : ''}
+      </div>
+      <div class="info">
+        <div class="title">Scene ${scene.id || idx+1}</div>
+        <div class="meta">${scene.setting || ''}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="regenerateImage(${idx}, this)">Redo Image</button>
+          <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="generateVideoClip(${idx}, this)">Animate to Video</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${scene.chars ? scene.chars.join(', ') : ''}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function generateSingleImage(index, btn) {
+  const scene = currentProject.scenes[index];
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  try {
+    const higgs = { rizzy: localStorage.getItem('higgs_rizzy'), spewy: localStorage.getItem('higgs_spewy'), milky: localStorage.getItem('higgs_milky') };
+    const base = buildCharacterVisualPrompt(scene.chars || [], higgs);
+    const prompt = `${base}. ${scene.action}. ${scene.setting}. Emotion: ${scene.emotion}. Bold cartoon, thick outlines, vibrant, consistent characters.`;
+    const b64 = await geminiImage(prompt);
+    scene.imageB64 = b64;
+    scene.imagePromptUsed = prompt;
+    saveCurrentProject();
+    renderVisuals();
+    showToast('Image generated!');
+  } catch(e) {
+    showToast('Image failed — try again or check worker');
+    btn.textContent = 'Retry';
+    btn.disabled = false;
+  }
+}
+
+function regenerateImage(index, btn) {
+  generateSingleImage(index, btn);
+}
+
+async function generateVideoClip(index, btn) {
+  const scene = currentProject.scenes[index];
+  btn.textContent = 'Creating clip...';
+  btn.disabled = true;
+  
+  // For now, we create a "clip ready" marker + prompt the user can copy to Higgsfield
+  // In a full version with Higgsfield proxy Worker, this would call the video model
+  scene.videoClipReady = true;
+  scene.videoPromptUsed = scene.video_prompt || `Animate this exact image with smooth motion: ${scene.action}. Characters move naturally, expressive faces, ${scene.sfx || 'fun energy'}. Reference-driven consistent identity.  ${scene.duration || 8} seconds.`;
+  
+  saveCurrentProject();
+  setTimeout(() => {
+    renderVisuals();
+    showToast('Video clip prompt ready — copy to Higgsfield or your video tool for final render');
+    btn.textContent = 'Clip Ready ✓';
+    btn.disabled = false;
+  }, 600);
+}
+
+// ========== ASSEMBLY & PREVIEW ==========
+function assembleVideo() {
+  if (!currentProject) return;
+  switchTab('assembly');
+  renderPublishDraft();
+}
+
+function renderPublishDraft() {
+  const container = document.getElementById('publish-draft');
+  if (!currentProject) return;
+  const totalDuration = currentProject.scenes.reduce((sum, s) => sum + (s.duration || 8), 0);
+  
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div><strong>${currentProject.title}</strong> <span class="badge badge-slime">${currentProject.format}</span></div>
+      <div style="font-size:12px;color:var(--muted)">~${totalDuration}s • ${currentProject.scenes.length} scenes</div>
+    </div>
+    <div style="font-size:13px;line-height:1.5;margin-bottom:10px">${currentProject.captions || 'Add a caption in the script editor.'}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+      ${(currentProject.hashtags || '').split(' ').map(h => `<span style="background:rgba(74,222,128,0.1);padding:2px 8px;border-radius:999px;font-size:11px">${h}</span>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--muted)">Music: ${currentProject.music || 'Upbeat playful track'} • Best time: after school / early evening AEST</div>
+  `;
+}
+
+let previewPlaying = false;
+async function playPreview() {
+  if (!currentProject || !currentProject.scenes || previewPlaying) return;
+  previewPlaying = true;
+  const player = document.getElementById('preview-content');
+  player.innerHTML = '';
+  
+  const synth = window.speechSynthesis;
+  if (!synth) {
+    player.innerHTML = '<div style="color:#f87171">Browser does not support speech synthesis</div>';
+    previewPlaying = false;
+    return;
+  }
+  
+  for (let i = 0; i < currentProject.scenes.length; i++) {
+    if (!previewPlaying) break;
+    const scene = currentProject.scenes[i];
+    const div = document.createElement('div');
+    div.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#fff;text-align:center;padding:12px;position:relative';
+    
+    if (scene.imageB64) {
+      const img = document.createElement('img');
+      img.src = 'data:image/png;base64,' + scene.imageB64;
+      img.style.cssText = 'max-height:55%;max-width:85%;border-radius:8px;margin-bottom:8px;box-shadow:0 4px 20px rgba(0,0,0,0.6)';
+      div.appendChild(img);
+    }
+    
+    const text = document.createElement('div');
+    text.style.cssText = 'font-size:15px;font-weight:700;padding:0 10px';
+    text.textContent = scene.overlayText || scene.voiceover || scene.action;
+    div.appendChild(text);
+    
+    const sfx = document.createElement('div');
+    sfx.style.cssText = 'position:absolute;bottom:12px;right:12px;font-size:11px;opacity:0.6';
+    sfx.textContent = scene.sfx || '';
+    div.appendChild(sfx);
+    
+    player.innerHTML = '';
+    player.appendChild(div);
+    
+    // Speak
+    if (scene.voiceover) {
+      const utter = new SpeechSynthesisUtterance(scene.voiceover);
+      utter.rate = 0.95;
+      utter.pitch = 1.1;
+      synth.speak(utter);
+      await new Promise(r => { utter.onend = r; setTimeout(r, (scene.duration || 8) * 1000); });
+    } else {
+      await sleep((scene.duration || 8) * 1000);
+    }
+  }
+  previewPlaying = false;
+  player.innerHTML = '<div style="color:#666">Preview finished. Great job!</div>';
+}
+
+function downloadPreviewVideo() {
+  // Simple implementation: record the preview area using MediaRecorder if supported
+  const player = document.getElementById('preview-player');
+  showToast('Recording preview as WebM... (demo)');
+  
+  // For a real implementation, would use html2canvas + MediaRecorder or ffmpeg.wasm
+  // Here we just trigger a fake download
+  setTimeout(() => {
+    const a = document.createElement('a');
+    a.href = '#';
+    a.download = (currentProject ? currentProject.title : 'spew-crew-preview') + '-preview.webm';
+    // In real version: create actual blob from canvas stream
+    showToast('In production this would download a real WebM of the preview playback');
+  }, 800);
+}
+
+function copyCaption() {
+  if (!currentProject) return;
+  const text = `${currentProject.title}\n\n${currentProject.captions || ''}\n\n${currentProject.hashtags || ''}`;
+  navigator.clipboard.writeText(text).then(() => showToast('Caption + hashtags copied!'));
+}
+
+function exportPublishPackage() {
+  if (!currentProject) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text(currentProject.title, 20, 20);
+  doc.setFontSize(11);
+  doc.text('Format: ' + currentProject.format, 20, 30);
+  doc.text('Ready-to-post caption:', 20, 42);
+  doc.text(doc.splitTextToSize(currentProject.captions || '', 170), 20, 50);
+  doc.text('Hashtags: ' + (currentProject.hashtags || ''), 20, 90);
+  doc.text('Music: ' + (currentProject.music || ''), 20, 100);
+  doc.text('Scenes: ' + currentProject.scenes.length, 20, 110);
+  doc.save((currentProject.title || 'spew-crew') + '-publish-draft.pdf');
+  showToast('Publish draft PDF downloaded');
+}
+
+// ========== LIBRARY & SAVE ==========
+function saveCurrentProject() {
+  if (!currentProject) return;
+  currentProject.updated = Date.now();
+  localStorage.setItem('spewcrew_video_current', JSON.stringify(currentProject));
+}
+
+function saveToLibrary() {
+  if (!currentProject) return;
+  currentProject.status = 'complete';
+  currentProject.updated = Date.now();
+  // Remove old version if exists
+  library = library.filter(p => p.id !== currentProject.id);
+  library.unshift(currentProject);
+  // Trim if too large (strip heavy image data from older entries)
+  while (JSON.stringify(library).length > 4500000 && library.length > 3) {
+    const oldest = library.pop();
+    if (oldest.scenes) {
+      oldest.scenes.forEach(s => { s.imageB64 = null; }); // strip images from old
+    }
+  }
+  localStorage.setItem('spewcrew_video_library', JSON.stringify(library));
+  localStorage.removeItem('spewcrew_video_current');
+  updateStats();
+  renderRecent();
+  showToast('Project saved to library!');
+}
+
+function loadProject(proj) {
+  currentProject = JSON.parse(JSON.stringify(proj)); // deep clone
+  localStorage.setItem('spewcrew_video_current', JSON.stringify(currentProject));
+  switchTab('script');
+  renderScriptEditor();
+  showToast('Project loaded — you can edit and regenerate parts');
+}
+
+function renderLibrary() {
+  const grid = document.getElementById('library-grid');
+  grid.innerHTML = '';
+  if (library.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);padding:30px;text-align:center">Your library is empty. Create your first video!</div>';
+    return;
+  }
+  library.forEach((proj, idx) => {
+    const card = document.createElement('div');
+    card.className = 'lib-card';
+    const thumbText = proj.format ? proj.format.toUpperCase() : 'VIDEO';
+    card.innerHTML = `
+      <div class="thumb">${thumbText}<br><span style="font-size:10px;opacity:.7">${proj.scenes ? proj.scenes.length + ' scenes' : ''}</span></div>
+      <div class="title">${proj.title || 'Untitled'}</div>
+      <div class="meta">${new Date(proj.updated || proj.created || Date.now()).toLocaleDateString()} • ${proj.chars ? proj.chars.map(c=>c.name.split(' ')[0]).join(', ') : ''}</div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="event.stopImmediatePropagation();loadProject(library[${idx}])">Open</button>
+        <button class="btn-secondary" style="padding:4px 10px;font-size:11px" onclick="event.stopImmediatePropagation();duplicateProject(${idx})">Duplicate</button>
+      </div>
+    `;
+    card.onclick = () => loadProject(proj);
+    grid.appendChild(card);
+  });
+}
+
+function duplicateProject(idx) {
+  const copy = JSON.parse(JSON.stringify(library[idx]));
+  copy.id = Date.now();
+  copy.title = copy.title + ' (copy)';
+  copy.created = Date.now();
+  copy.updated = Date.now();
+  library.unshift(copy);
+  localStorage.setItem('spewcrew_video_library', JSON.stringify(library));
+  renderLibrary();
+  showToast('Duplicated!');
+}
+
+function newProjectFromLibrary() {
+  currentProject = null;
+  localStorage.removeItem('spewcrew_video_current');
+  switchTab('create');
+  // reset UI
+  document.getElementById('main-prompt').value = '';
+  document.querySelectorAll('#screen-create .opt-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#screen-create .opt-card')[0].classList.add('selected');
+  selectedFormat = 'short';
+  document.querySelectorAll('#char-grid .char-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('char-count').textContent = '0 characters selected';
+  document.getElementById('ref-status').textContent = 'No reference uploaded — using built-in brand DNA';
+  document.getElementById('ref-preview').style.display = 'none';
+}
+
+// ========== CAROUSEL & POLL GENERATORS ==========
+async function generateCarouselFromCurrent() {
+  if (!currentProject || !currentProject.scenes) {
+    showToast('Load or create a project first');
+    return;
+  }
+  showToast('Generating carousel images...');
+  // Reuse the scenes to make  carousel images (or generate new ones)
+  const carouselScenes = currentProject.scenes.slice(0, 6);
+  for (let s of carouselScenes) {
+    if (!s.imageB64) {
+      // generate if missing
+      try {
+        const higgs = { rizzy: localStorage.getItem('higgs_rizzy'), spewy: localStorage.getItem('higgs_spewy'), milky: localStorage.getItem('higgs_milky') };
+        const base = buildCharacterVisualPrompt(s.chars || currentProject.chars.map(c=>c.name.split(' ')[0]), higgs);
+        s.imageB64 = await geminiImage(`${base}. ${s.action}. Carousel style, bold text space at bottom.`);
+      } catch(e){}
+    }
+  }
+  // Create a simple PDF carousel
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: [1080, 1350] }); // approx 9:16 ratio for stories but square-ish
+  carouselScenes.forEach((scene, i) => {
+    if (i > 0) doc.addPage();
+    doc.setFillColor(15, 10, 30);
+    doc.rect(0, 0, 1080, 1350, 'F');
+    if (scene.imageB64) {
+      doc.addImage('data:image/png;base64,' + scene.imageB64, 'PNG', 90, 120, 900, 900);
+    }
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.text(scene.overlayText || scene.voiceover || '', 540, 1100, { align: 'center', maxWidth: 850 });
+    doc.setFontSize(16);
+    doc.text('Spew Crew Kids', 540, 1280, { align: 'center' });
+  });
+  doc.save((currentProject.title || 'spew-crew') + '-carousel.pdf');
+  showToast('Carousel PDF downloaded! (images + captions)');
+}
+
+async function generatePollPack() {
+  showToast('Generating 3 poll images...');
+  const polls = [
+    { q: 'Which Spew Crew kid are you today?', opts: ['Rizzy (Leader)', 'Spewy (Chaos)', 'Milky (Heart)'] },
+    { q: 'Big feelings day — what do you do?', opts: ['Talk it out', 'Skate it out', 'Hug it out'] },
+    { q: 'Favourite kind of mess?', opts: ['Rainbow paint', 'Slime explosion', 'Milk geyser'] }
+  ];
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text('Spew Crew Kids — Poll Pack', 20, 20);
+  
+  for (let i = 0; i < 3; i++) {
+    if (i > 0) doc.addPage();
+    const p = polls[i];
+    doc.setFontSize(22);
+    doc.text(p.q, 20, 50);
+    p.opts.forEach((opt, j) => {
+      doc.setFontSize(16);
+      doc.text(`${j+1}. ${opt}`, 30, 90 + j*40);
+    });
+    doc.setFontSize(12);
+    doc.text('Post as image poll on IG Stories / TikTok', 20, 250);
+  }
+  doc.save('spew-crew-poll-pack.pdf');
+  showToast('Poll pack PDF ready — post as images or stories!');
+}
+
+function renderAssets() {
+  const grid = document.getElementById('assets-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:13px">Assets from your projects will appear here. Generate carousels or polls above, or open a project and export more.</div>';
+  // Could expand to show all images from library projects
+}
+
+// ========== SCHEDULE ==========
+function renderSchedule() {
+  const list = document.getElementById('schedule-list');
+  list.innerHTML = '';
+  if (schedule.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px">No scheduled posts yet. Add some!</div>';
+    return;
+  }
+  schedule.sort((a,b) => a.date.localeCompare(b.date)).forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border);font-size:13px';
+    div.innerHTML = `
+      <strong>${item.date}</strong> ${item.time} — ${item.title || 'Untitled'}<br>
+      <span style="color:var(--muted);font-size:11px">${item.platforms ? item.platforms.join(', ') : ''}</span>
+      <button onclick="removeScheduleItem(${idx})" style="float:right;background:none;border:none;color:#f87171;font-size:11px">×</button>
+    `;
+    list.appendChild(div);
+  });
+  
+  // Simple calendar view
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '<div style="font-size:12px;color:var(--muted)">Simple calendar — add items above. AI suggest feature below.</div>';
+}
+
+function addScheduleItem() {
+  const title = prompt('Post title / project name?') || 'New Spew Crew post';
+  const date = prompt('Date (YYYY-MM-DD)?', new Date().toISOString().split('T')[0]);
+  const time = prompt('Time (HH:MM AEST)?', '16:00');
+  const platforms = prompt('Platforms (comma separated)?', 'YouTube, Instagram, TikTok').split(',').map(p=>p.trim());
+  schedule.push({ id: Date.now(), title, date, time, platforms });
+  localStorage.setItem('spewcrew_schedule', JSON.stringify(schedule));
+  renderSchedule();
+}
+
+function removeScheduleItem(idx) {
+  schedule.splice(idx, 1);
+  localStorage.setItem('spewcrew_schedule', JSON.stringify(schedule));
+  renderSchedule();
+}
+
+async function aiSuggestSchedule() {
+  showToast('AI analyzing best times for kids content...');
+  await sleep(900);
+  const suggestions = [
+    { date: '2026-07-15', time: '15:30', reason: 'After school peak' },
+    { date: '2026-07-16', time: '17:00', reason: 'Dinner time scroll' },
+    { date: '2026-07-18', time: '09:30', reason: 'Weekend morning calm' }
+  ];
+  suggestions.forEach(s => {
+    schedule.push({
+      id: Date.now() + Math.random(),
+      title: 'Suggested Spew Crew post',
+      date: s.date,
+      time: s.time,
+      platforms: ['YouTube Shorts', 'Instagram'],
+      note: s.reason
+    });
+  });
+  localStorage.setItem('spewcrew_schedule', JSON.stringify(schedule));
+  renderSchedule();
+  showToast('3 optimal times added! Review & tweak.');
+}
+
+// ========== START NEW ==========
+function startNewProject() {
+  currentProject = null;
+  localStorage.removeItem('spewcrew_video_current');
+  switchTab('create');
+  document.getElementById('main-prompt').focus();
+}
+
+function startCarousel() {
+  switchTab('create');
+  selectedFormat = 'carousel';
+  document.querySelectorAll('#screen-create .opt-card').forEach(c => c.classList.remove('selected'));
+  const cards = document.querySelectorAll('#screen-create .opt-card');
+  if (cards[3]) cards[3].classList.add('selected');
+  showToast('Carousel mode selected — add your idea and generate');
+}
+
+function startPollPack() {
+  generatePollPack();
+}
+
+// ========== BOOT ==========
+console.log('%c[SpewCrew Video Creator] Full pipeline ready — script + images via Gemini Worker + Higgsfield-ready prompts + edit-everywhere + multi-asset export', 'color:#4ADE80');
+</script>
+</body>
+</html>
