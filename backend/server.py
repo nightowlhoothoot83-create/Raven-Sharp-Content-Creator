@@ -26,7 +26,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-import os, uuid, json, logging, asyncio, base64
+import os, uuid, json, logging, asyncio, base64, hmac, hashlib
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 
@@ -70,6 +70,12 @@ if not JWT_SECRET:
     )
 
 STRIPE_KEY  = os.environ.get("STRIPE_API_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+if STRIPE_KEY and not STRIPE_WEBHOOK_SECRET:
+    _startup_warnings.append(
+        "STRIPE_WEBHOOK_SECRET was not set — /billing/webhook will REJECT all events (fail-closed) "
+        "until this is set. Get it from Stripe Dashboard -> Developers -> Webhooks -> your endpoint."
+    )
 RESEND_KEY  = os.environ.get("RESEND_API_KEY", "")
 RESEND_FROM = os.environ.get("RESEND_FROM_EMAIL", "Raven Sharp <noreply@raven-sharp.com>")
 if not RESEND_KEY:
@@ -528,10 +534,43 @@ async def create_checkout(payload: StripeCheckoutIn, user: dict = Depends(get_us
             raise HTTPException(500, "Stripe error")
         return {"checkout_url": res.json()["url"]}
 
+def verify_stripe_signature(payload: bytes, sig_header: str, secret: str, tolerance_sec: int = 300) -> bool:
+    """See Book Creator's identical implementation for full explanation.
+    https://docs.stripe.com/webhooks#verify-manually"""
+    if not sig_header or not secret:
+        return False
+    try:
+        parts = dict(item.split("=", 1) for item in sig_header.split(",") if "=" in item)
+        timestamp = parts.get("t")
+        v1 = parts.get("v1")
+        if not timestamp or not v1:
+            return False
+        if abs(datetime.now(timezone.utc).timestamp() - int(timestamp)) > tolerance_sec:
+            log.warning("Stripe webhook rejected: timestamp outside tolerance (possible replay)")
+            return False
+        signed_payload = f"{timestamp}.".encode() + payload
+        expected = hmac.new(secret.encode(), signed_payload, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, v1)
+    except Exception as e:
+        log.warning(f"Stripe signature verification error: {e}")
+        return False
+
+
 @api.post("/billing/webhook")
 async def stripe_webhook(request: Request):
+    raw_body = await request.body()
+
+    if not STRIPE_WEBHOOK_SECRET:
+        log.error("Webhook rejected: STRIPE_WEBHOOK_SECRET is not configured")
+        raise HTTPException(503, "Webhook not configured — set STRIPE_WEBHOOK_SECRET")
+
+    sig_header = request.headers.get("stripe-signature", "")
+    if not verify_stripe_signature(raw_body, sig_header, STRIPE_WEBHOOK_SECRET):
+        log.error("Webhook rejected: invalid or missing Stripe-Signature header")
+        raise HTTPException(400, "Invalid signature")
+
     try:
-        event = json.loads(await request.body())
+        event = json.loads(raw_body)
         if event["type"] == "checkout.session.completed":
             s = event["data"]["object"]
             await db.users.update_one(
