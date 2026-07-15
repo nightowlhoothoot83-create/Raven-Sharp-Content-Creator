@@ -576,10 +576,20 @@ async def stripe_webhook(request: Request):
             await db.users.update_one(
                 {"id": s["metadata"]["user_id"]},
                 {"$set": {"tier": s["metadata"]["tier"], "videos_this_month": 0,
-                          "subscription_id": s.get("subscription")}})
+                          "subscription_id": s.get("subscription"),
+                          "payment_failed_at": None, "payment_failure_count": 0}})
         elif event["type"] in ["customer.subscription.deleted", "customer.subscription.paused"]:
             sub_id = event["data"]["object"]["id"]
             await db.users.update_one({"subscription_id": sub_id}, {"$set": {"tier": "free"}})
+        elif event["type"] == "invoice.payment_failed":
+            invoice = event["data"]["object"]
+            sub_id = invoice.get("subscription")
+            if sub_id:
+                await db.users.update_one(
+                    {"subscription_id": sub_id},
+                    {"$set": {"payment_failed_at": datetime.now(timezone.utc).isoformat()},
+                     "$inc": {"payment_failure_count": 1}})
+                log.warning(f"Payment failed for subscription {sub_id}")
     except Exception as e:
         log.error(f"Webhook error: {e}")
     return {"ok": True}
