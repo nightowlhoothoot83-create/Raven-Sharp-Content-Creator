@@ -305,7 +305,7 @@ class ProviderNotConfigured(HTTPException):
 
 HIGGSFIELD_VIDEO_MODEL = os.environ.get("HIGGSFIELD_VIDEO_MODEL", "")  # e.g. "kling/v1/text-to-video" — CONFIRM against your dashboard
 
-async def call_invideo(script: str, brand_context: str, output_preset: dict) -> dict:
+async def call_invideo(script: str, brand_context: str, output_preset: dict, character_ref_urls: Optional[List[str]] = None) -> dict:
     """STUB. Real API confirmed to exist at pro-api.invideo.io, but I only
     found 2023-era ChatGPT-plugin docs for it (almost certainly stale).
     Get current API docs + key from invideo.io dashboard before filling in."""
@@ -336,7 +336,7 @@ async def call_higgsfield(script: str, brand_context: str, output_preset: dict, 
         raise HTTPException(502, f"Higgsfield generation failed: {e}")
     return {"provider": "higgsfield", "result": result}
 
-async def call_meta(script: str, brand_context: str, output_preset: dict) -> dict:
+async def call_meta(script: str, brand_context: str, output_preset: dict, character_ref_urls: Optional[List[str]] = None) -> dict:
     """STUB. No verified public API found for Meta AI video generation."""
     if not META_API_KEY:
         raise ProviderNotConfigured("meta", "META_API_KEY not set")
@@ -755,7 +755,18 @@ async def generate_video_endpoint(payload: GenerateVideoIn, user: dict = Depends
         raise HTTPException(400, f"Unknown output_format. Choose one of: {list(OUTPUT_PRESETS.keys())}")
 
     context = await _resolve_brand_context(payload.brand_profile_id, user["id"])
-    result = await PROVIDERS[payload.provider](payload.script, context, OUTPUT_PRESETS[payload.output_format])
+
+    # This was a confirmed bug: call_higgsfield has always supported
+    # character_ref_urls for consistency, but nothing ever actually fetched
+    # or passed them — brand characters' reference images sat unused in the
+    # database on every single generation.
+    character_ref_urls = []
+    if payload.brand_profile_id:
+        profile = await db.brand_profiles.find_one({"id": payload.brand_profile_id, "user_id": user["id"]})
+        if profile:
+            character_ref_urls = [c["image_url"] for c in profile.get("characters", []) if c.get("image_url")]
+
+    result = await PROVIDERS[payload.provider](payload.script, context, OUTPUT_PRESETS[payload.output_format], character_ref_urls or None)
     await db.users.update_one({"id": user["id"]}, {"$inc": {"videos_this_month": 1}})
     return result
 
