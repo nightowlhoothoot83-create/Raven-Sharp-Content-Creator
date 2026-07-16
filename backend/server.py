@@ -99,6 +99,9 @@ if not (R2_ENDPOINT and R2_ACCESS_KEY and R2_SECRET_KEY):
 # Keeps iteration free-ish; the expensive provider call only fires once the
 # user is happy with the script and asks for the actual render.
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+RUNWARE_API_KEY = os.environ.get("RUNWARE_API_KEY", "")
+RUNWARE_MODEL = os.environ.get("RUNWARE_MODEL", "runware:101@1")  # image generation — verify against your dashboard
+RUNWARE_BGREMOVE_MODEL = os.environ.get("RUNWARE_BGREMOVE_MODEL", "runware:110@1")  # verify against your dashboard
 if not GEMINI_API_KEY:
     _startup_warnings.append(
         "GEMINI_API_KEY was not set — /api/generate/script will return a clear 500 error. "
@@ -732,6 +735,96 @@ async def _resolve_brand_context(brand_profile_id: Optional[str], user_id: str) 
         char_lines = [f"- {c.get('name','')}: {c.get('description','')}" for c in profile["characters"]]
         lines.append("Established characters (keep consistent):\n" + "\n".join(char_lines))
     return "\n".join(lines)
+
+async def call_runware_image(prompt: str, reference_image_url: Optional[str] = None,
+                              width: int = 1024, height: int = 1024) -> Optional[str]:
+    """Real character-consistency support via Runware's referenceImages
+    parameter. Returns an image URL, or None on failure."""
+    if not RUNWARE_API_KEY:
+        return None
+    task = {
+        "taskType": "imageInference", "taskUUID": str(uuid.uuid4()),
+        "model": RUNWARE_MODEL, "positivePrompt": prompt,
+        "width": width, "height": height, "numberResults": 1, "outputType": "URL",
+    }
+    if reference_image_url:
+        task["referenceImages"] = [reference_image_url]
+    try:
+        async with httpx.AsyncClient(timeout=90) as c:
+            res = await c.post("https://api.runware.ai/v1",
+                headers={"Authorization": f"Bearer {RUNWARE_API_KEY}", "Content-Type": "application/json"},
+                json=[task])
+            if res.status_code != 200:
+                logger.error(f"Runware error {res.status_code}: {res.text[:300]}")
+                return None
+            data = res.json()
+            results = data.get("data", data) if isinstance(data, dict) else data
+            return results[0].get("imageURL") if isinstance(results, list) and results else None
+    except Exception as e:
+        logger.error(f"Runware call failed: {e}")
+        return None
+
+
+class GenerateImageIn(BaseModel):
+    prompt: str
+    brand_profile_id: Optional[str] = None
+
+@api.post("/generate/image")
+async def generate_image_endpoint(payload: GenerateImageIn, user: dict = Depends(get_user)):
+    """Standalone image generation (thumbnails, still assets, character
+    references) — didn't exist at all before; this app only generated
+    scripts and video. Uses the brand's first character reference image
+    for consistency, same as Higgsfield's video generation does."""
+    if not RUNWARE_API_KEY:
+        raise HTTPException(500, "RUNWARE_API_KEY not configured")
+    character_ref_url = None
+    if payload.brand_profile_id:
+        profile = await db.brand_profiles.find_one({"id": payload.brand_profile_id, "user_id": user["id"]})
+        if profile:
+            chars = profile.get("characters", [])
+            if chars and chars[0].get("image_url"):
+                character_ref_url = chars[0]["image_url"]
+
+    image_url = await call_runware_image(payload.prompt, character_ref_url)
+    if not image_url:
+        raise HTTPException(500, "Image generation failed")
+    async with httpx.AsyncClient(timeout=30) as c:
+        img_res = await c.get(image_url)
+        if not img_res.is_success:
+            raise HTTPException(500, "Could not fetch generated image")
+        return {"image_base64": base64.b64encode(img_res.content).decode(), "image_url": image_url}
+
+
+class RemoveBgIn(BaseModel):
+    image_base64: str
+    mime: str = "image/png"
+
+@api.post("/remove-background")
+async def remove_background_endpoint(payload: RemoveBgIn, user: dict = Depends(get_user)):
+    """Background removal — didn't exist at all before in this app."""
+    if not RUNWARE_API_KEY:
+        raise HTTPException(500, "RUNWARE_API_KEY not configured")
+    task = {
+        "taskType": "removeBackground", "taskUUID": str(uuid.uuid4()),
+        "model": RUNWARE_BGREMOVE_MODEL, "outputType": "URL", "outputFormat": "PNG",
+        "inputImage": f"data:{payload.mime};base64,{payload.image_base64}",
+    }
+    async with httpx.AsyncClient(timeout=90) as c:
+        res = await c.post("https://api.runware.ai/v1",
+            headers={"Authorization": f"Bearer {RUNWARE_API_KEY}", "Content-Type": "application/json"},
+            json=[task])
+        if res.status_code != 200:
+            raise HTTPException(500, f"Background removal failed: {res.text[:200]}")
+        data = res.json()
+        results = data.get("data", data) if isinstance(data, dict) else data
+        image_url = results[0].get("imageURL") if isinstance(results, list) and results else None
+        if not image_url:
+            raise HTTPException(500, "Background removal failed — no result returned")
+        img_res = await c.get(image_url)
+        if not img_res.is_success:
+            raise HTTPException(500, "Could not fetch result image")
+        return {"base64": base64.b64encode(img_res.content).decode(), "mime": "image/png"}
+
 
 @api.post("/generate/script")
 async def generate_script_endpoint(payload: GenerateScriptIn, user: dict = Depends(get_user)):
