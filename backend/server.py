@@ -604,6 +604,62 @@ async def stripe_webhook(request: Request):
     return {"ok": True}
 
 # ── Brand profiles (identical pattern to Book Creator) ──────────────────────
+OWNER_BRAND_SEEDS = [
+    {
+        "name": "RavenSharp Tools",
+        "brand_bible": "Tech/AI division of Ascension Digital Group — practical, no-nonsense, tool-focused. Covers mycalctools.net, mycalendartools.net, Image Optimiser, POD Suite, Book Creator, Content Creator. Tone: clear, helpful, confident, zero fluff.",
+        "primary_color": "#7c5cbf", "secondary_color": "#a78bfa",
+    },
+    {
+        "name": "Zyia Creations",
+        "brand_bible": "Cosmic/spiritual brand — sacred geometry, psychedelic art, sovereignty and shadow-work themes. Tone: mystical, introspective, evocative. Sells on Etsy (zyiacreations.etsy.com).",
+        "primary_color": "#6b21a8", "secondary_color": "#c026d3",
+    },
+    {
+        "name": "Spew Crew Kids",
+        "brand_bible": "Children's entertainment brand for YouTube — warm chaos that always resolves positively, every character gets a win, kid-friendly humour with sound effects.",
+        "primary_color": "#4ADE80", "secondary_color": "#E53E3E",
+        "characters": [
+            {"name": "Rizzy Reflux", "description": "The leader — rainbow pastels, emotional regulation themes, bold and protective."},
+            {"name": "Spewy Spence", "description": "The chaos engine — slime green, impulse control themes, hyper and adventurous skater."},
+            {"name": "Milky Matt", "description": "The heart — soft blues/whites, self-acceptance themes."},
+        ],
+    },
+    {
+        "name": "Feed the Feed",
+        "brand_bible": "Dystopian social commentary brand, Facebook-based. Tone: sharp, satirical, unsettling-but-thoughtful.",
+        "primary_color": "#1a1a1a", "secondary_color": "#dc2626",
+    },
+    {
+        "name": "Mystical Moments",
+        "brand_bible": "Fine art photography by Emma James. Tone: contemplative, atmospheric, high-craft. Listed on ArtPal and Fine Art America.",
+        "primary_color": "#1e293b", "secondary_color": "#94a3b8",
+    },
+]
+
+@api.post("/brand-profiles/seed-owner-brands")
+async def seed_owner_brands(user: dict = Depends(get_user)):
+    """Owner-only, idempotent — pre-populates the known ADG brands so they
+    don't need to be entered manually. Safe to call more than once; skips
+    any brand that already exists by name. Same brand set as Ad Manager's
+    seed, kept consistent across apps."""
+    if user.get("tier") != "owner":
+        raise HTTPException(403, "Owner only")
+    existing_names = {b["name"] for b in await db.brand_profiles.find({"user_id": user["id"]}, {"name": 1}).to_list(200)}
+    created = []
+    for seed in OWNER_BRAND_SEEDS:
+        if seed["name"] in existing_names:
+            continue
+        profile = {"id": str(uuid.uuid4()), "user_id": user["id"], "logo_url": None,
+                   "characters": seed.get("characters", []), "assets": [],
+                   "name": seed["name"], "brand_bible": seed["brand_bible"],
+                   "primary_color": seed["primary_color"], "secondary_color": seed["secondary_color"],
+                   "created_at": datetime.now(timezone.utc).isoformat()}
+        await db.brand_profiles.insert_one(profile)
+        created.append(seed["name"])
+    return {"created": created, "skipped_existing": [s["name"] for s in OWNER_BRAND_SEEDS if s["name"] in existing_names]}
+
+
 @api.post("/brand-profiles")
 async def create_brand_profile(payload: BrandProfileIn, user: dict = Depends(get_user)):
     tier = user.get("tier", "free")
