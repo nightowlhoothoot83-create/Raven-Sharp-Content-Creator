@@ -31,7 +31,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 
 import bcrypt, jwt, httpx
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -369,6 +369,12 @@ class ResetPasswordIn(BaseModel):
     token: str
     new_password: str
 
+class BrandAsset(BaseModel):
+    name: str = ""
+    url: str
+    type: str = "image"          # image | logo | reference | screenshot
+    description: str = ""
+
 class BrandProfileIn(BaseModel):
     name: str
     brand_bible: str = ""
@@ -376,11 +382,14 @@ class BrandProfileIn(BaseModel):
     secondary_color: Optional[str] = None
     logo_url: Optional[str] = None
     characters: List[Dict[str, Any]] = Field(default_factory=list)  # [{name, description, image_url}]
+    assets: List[BrandAsset] = Field(default_factory=list)          # broader asset/blueprint library
 
 class AssetUploadIn(BaseModel):
     image_base64: str
     mime: str = "image/png"
     filename: str = "asset"
+    asset_name: str = ""
+    asset_type: str = "image"
 
 class GenerateScriptIn(BaseModel):
     brief: str
@@ -635,15 +644,23 @@ async def delete_brand_profile(profile_id: str, user: dict = Depends(get_user)):
 
 @api.post("/brand-profiles/{profile_id}/upload-asset")
 async def upload_brand_asset(profile_id: str, payload: AssetUploadIn, user: dict = Depends(get_user)):
+    """This previously uploaded to R2 and returned a URL, but never actually
+    saved it anywhere on the brand profile — the asset had nowhere permanent
+    to live. Now it's pushed onto the profile's asset library, matching Ad
+    Manager's working pattern."""
     profile = await db.brand_profiles.find_one({"id": profile_id, "user_id": user["id"]})
     if not profile:
         raise HTTPException(404, "Brand profile not found")
     image_bytes = base64.b64decode(payload.image_base64)
     key = f"{uuid.uuid4()}-{payload.filename}"
-    url = await upload_to_r2(image_bytes, f"video-creator-assets/{user['id']}", key, payload.mime)
+    url = await upload_to_r2(image_bytes, f"video-creator-assets/{user['id']}/{profile_id}", key, payload.mime)
     if not url:
         raise HTTPException(500, "Upload failed — R2 not configured or upload error")
-    return {"url": url}
+
+    new_asset = {"name": payload.asset_name or payload.filename, "url": url,
+                 "type": payload.asset_type, "description": ""}
+    await db.brand_profiles.update_one({"id": profile_id}, {"$push": {"assets": new_asset}})
+    return {"url": url, "asset": new_asset}
 
 # ── Generation ────────────────────────────────────────────────────────────────
 async def _resolve_brand_context(brand_profile_id: Optional[str], user_id: str) -> str:
@@ -687,6 +704,25 @@ async def generate_video_endpoint(payload: GenerateVideoIn, user: dict = Depends
     return result
 
 # ── Projects ──────────────────────────────────────────────────────────────────
+@api.post("/projects/upload-video")
+async def upload_finished_video(file: UploadFile = File(...), user: dict = Depends(get_user)):
+    """For clips made outside this app — e.g. free Meta AI Vibes generations,
+    or anything else — upload the finished file directly rather than going
+    through a generation provider. Uses multipart upload (not base64-in-JSON)
+    since video files are too large for that to be practical."""
+    if not file.content_type or not file.content_type.startswith("video/"):
+        raise HTTPException(400, "File must be a video")
+    max_bytes = 200 * 1024 * 1024  # 200MB
+    contents = await file.read()
+    if len(contents) > max_bytes:
+        raise HTTPException(413, f"Video too large ({len(contents)/1024/1024:.0f}MB) — max 200MB")
+    key = f"{uuid.uuid4()}-{file.filename or 'video.mp4'}"
+    url = await upload_to_r2(contents, f"video-creator-uploads/{user['id']}", key, file.content_type)
+    if not url:
+        raise HTTPException(500, "Upload failed — R2 not configured or upload error")
+    return {"url": url, "size_bytes": len(contents), "content_type": file.content_type}
+
+
 @api.post("/projects")
 async def create_project(payload: ProjectCreateIn, user: dict = Depends(get_user)):
     if payload.output_format not in OUTPUT_PRESETS:
