@@ -153,11 +153,6 @@ TIERS = {
 }
 
 # TODO: replace with real Stripe Price IDs (separate product from Book Creator)
-STRIPE_PRICES = {
-    "creator": {"monthly": "price_REPLACE_VC_CREATOR_MONTHLY", "annual": "price_REPLACE_VC_CREATOR_ANNUAL"},
-    "studio":  {"monthly": "price_REPLACE_VC_STUDIO_MONTHLY",  "annual": "price_REPLACE_VC_STUDIO_ANNUAL"},
-}
-
 # ── Output format presets (aspect ratio / resolution, per platform) ─────────
 OUTPUT_PRESETS = {
     "vertical_1080x1920":  {"label": "Vertical 9:16 (TikTok / Reels / Shorts)", "width": 1080, "height": 1920},
@@ -528,14 +523,21 @@ async def verify_reset_token(token: str):
 async def create_checkout(payload: StripeCheckoutIn, user: dict = Depends(get_user)):
     if not STRIPE_KEY:
         raise HTTPException(500, "Stripe not configured")
-    price_id = STRIPE_PRICES.get(payload.tier, {}).get(payload.billing)
-    if not price_id:
+    tier_cfg = TIERS.get(payload.tier)
+    if not tier_cfg or tier_cfg["price"] <= 0:
         raise HTTPException(400, "Invalid tier")
+    monthly_price = tier_cfg["price"]
+    unit_amount = monthly_price * 100 if payload.billing == "monthly" else monthly_price * 10 * 100
+    interval = "month" if payload.billing == "monthly" else "year"
+
     async with httpx.AsyncClient(timeout=30) as c:
         res = await c.post("https://api.stripe.com/v1/checkout/sessions",
             headers={"Authorization": f"Bearer {STRIPE_KEY}"},
             data={"mode": "subscription",
-                  "line_items[0][price]": price_id,
+                  "line_items[0][price_data][currency]": "aud",
+                  "line_items[0][price_data][product_data][name]": f"Raven Sharp Content Creator — {payload.tier.title()} ({payload.billing})",
+                  "line_items[0][price_data][unit_amount]": str(unit_amount),
+                  "line_items[0][price_data][recurring][interval]": interval,
                   "line_items[0][quantity]": "1",
                   "success_url": f"{FRONTEND_URL}/account?session_id={{CHECKOUT_SESSION_ID}}",
                   "cancel_url": f"{FRONTEND_URL}/pricing",
@@ -543,6 +545,7 @@ async def create_checkout(payload: StripeCheckoutIn, user: dict = Depends(get_us
                   "metadata[user_id]": user["id"],
                   "metadata[tier]": payload.tier})
         if res.status_code != 200:
+            log.error(f"Stripe checkout error: {res.text[:300]}")
             raise HTTPException(500, "Stripe error")
         return {"checkout_url": res.json()["url"]}
 
