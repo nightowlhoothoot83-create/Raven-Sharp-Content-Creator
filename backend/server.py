@@ -112,7 +112,6 @@ for _w in _startup_warnings:
     log.warning("STARTUP: %s", _w)
 
 OWNER_EMAIL  = os.environ.get("OWNER_EMAIL", "ascensiondigitalagency@outlook.com")
-# NOTE: video.raven-sharp.com is a placeholder — subdomain not created yet.
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 CORS_ORIGINS = [
     origin.strip()
@@ -120,8 +119,8 @@ CORS_ORIGINS = [
         "CORS_ORIGINS",
         ",".join([
             FRONTEND_URL,
-            "https://video.raven-sharp.com",
-            "https://raven-sharp-video-creator.pages.dev",
+            "https://content.raven-sharp.com",
+            "https://raven-sharp-content-creator.pages.dev",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
         ]),
