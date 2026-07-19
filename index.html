@@ -131,11 +131,31 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800}
 .badge-slime{background:rgba(74,222,128,0.15);color:var(--slime);border:1px solid rgba(74,222,128,0.3)}
 .canon-note{background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--slime);margin:10px 0}
+
+/* Auth (matches Book Creator's naming for suite-wide consistency) */
+.auth-wrap{max-width:420px;margin:60px auto;padding:0 20px}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px}
+.auth-title{font-family:'Outfit',system-ui,sans-serif;font-size:26px;font-weight:800;color:#fff;text-align:center;margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px}
+.auth-field{margin-bottom:16px}
+.auth-field label{display:block;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:700}
+.auth-field input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:14px;padding:13px 16px;color:var(--text);font-family:'Outfit',system-ui,sans-serif;font-size:15px;outline:none;transition:border-color .2s}
+.auth-field input:focus{border-color:var(--purple)}
+.auth-error{background:rgba(229,62,62,0.12);border:1px solid rgba(229,62,62,0.3);color:#ff8a8a;font-size:13px;border-radius:12px;padding:10px 14px;margin-bottom:16px;display:none}
+.auth-error.show{display:block}
+.auth-switch{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}
+.auth-switch a{color:var(--purple);font-weight:700;cursor:pointer;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-forgot{text-align:right;margin:-8px 0 16px}
+.auth-forgot a{font-size:12px;color:var(--muted);cursor:pointer;text-decoration:none}
+.auth-forgot a:hover{color:var(--purple)}
+.auth-btn{width:100%;background:linear-gradient(135deg,var(--purple),#a78bfa);border:none;border-radius:14px;padding:13px;color:#fff;font-family:'Outfit',system-ui,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:all .2s}
+.auth-btn:disabled{opacity:.6;cursor:default}
 </style>
 </head>
 <body>
 
-<div class="header">
+<div class="header" id="app-header" style="display:none">
   <div class="logo-circle"><img src="/brands/ravenSharpLogo.png" alt="Raven Sharp" style="width:100%;height:100%;object-fit:contain"></div>
   <div>
     <h1>Raven Sharp</h1>
@@ -148,12 +168,79 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
     <button class="tab-btn" onclick="switchTab('schedule')">Schedule</button>
     <button class="tab-btn" onclick="switchTab('library')">Library</button>
   </div>
+  <button class="lib-btn" onclick="switchTab('pricing')" style="margin-left:4px">💳</button>
   <button class="lib-btn" onclick="showLibrary()">📁 Library</button>
   <button class="lib-btn" onclick="switchTab('settings')" style="margin-left:4px">⚙️</button>
+  <button class="lib-btn" onclick="logout()" style="margin-left:4px" title="Log out">🚪</button>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-title" id="auth-title">Welcome back</div>
+      <div class="auth-sub" id="auth-sub">Sign in to start creating content</div>
+      <div class="auth-error" id="auth-error"></div>
+
+      <form id="auth-login-form" onsubmit="return doLogin(event)">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="login-email" required placeholder="you@example.com">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="login-password" required placeholder="********">
+        </div>
+        <div class="auth-forgot"><a onclick="showAuthMode('forgot')">Forgot password?</a></div>
+        <button type="submit" class="auth-btn" id="login-submit-btn">Sign In</button>
+      </form>
+
+      <form id="auth-register-form" onsubmit="return doRegister(event)" style="display:none">
+        <div class="auth-field">
+          <label>Name</label>
+          <input type="text" id="register-name" placeholder="Your name">
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="register-email" required placeholder="you@example.com">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="register-password" required minlength="8" placeholder="At least 8 characters">
+        </div>
+        <button type="submit" class="auth-btn" id="register-submit-btn">Create Free Account</button>
+      </form>
+
+      <form id="auth-forgot-form" onsubmit="return doForgotPassword(event)" style="display:none">
+        <div class="auth-field">
+          <label>Email address</label>
+          <input type="email" id="forgot-email" required placeholder="you@example.com">
+        </div>
+        <button type="submit" class="auth-btn" id="forgot-submit-btn">Send Reset Link</button>
+      </form>
+
+      <div id="auth-forgot-sent" style="display:none;text-align:center">
+        <p style="color:var(--muted);font-size:14px;line-height:1.6">If an account exists for that email, a reset link has been sent.</p>
+      </div>
+
+      <div class="auth-switch" id="auth-switch-login">No account? <a onclick="showAuthMode('register')">Create one free</a></div>
+      <div class="auth-switch" id="auth-switch-register" style="display:none">Already have an account? <a onclick="showAuthMode('login')">Sign in</a></div>
+      <div class="auth-switch" id="auth-switch-forgot" style="display:none"><a onclick="showAuthMode('login')">← Back to sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING SCREEN -->
+<div id="screen-pricing" class="screen">
+  <div class="auth-wrap" style="max-width:960px">
+    <div class="auth-title" style="text-align:center">Choose your plan</div>
+    <div class="auth-sub" style="text-align:center;margin-bottom:32px">Upgrade anytime — cancel anytime</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center" id="pricing-cards"></div>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
-<div id="screen-dashboard" class="screen active">
+<div id="screen-dashboard" class="screen">
   <h2>Dashboard</h2>
   <p style="color:var(--muted);margin-bottom:16px">Your Spew Crew content machine • Ready to make magic</p>
   
@@ -419,6 +506,172 @@ const CHARACTERS = [
 
 const BRAND_VOICE = `Tone: Silly, energetic, warm, inclusive, gross-in-a-fun-way. Humor and chaos always resolve into warmth, never mean-spirited. Every character gets a "win". Sound effects and onomatopoeia (SPLAT! WHOOSH! EWWWW!) are part of the voice. Kid-warm tone that also makes parents smile. Episode formula: Cold open mid-chaos → Problem → Attempt makes it worse (comedy escalation) → Twist (Milky Matt accidentally saves everything) → Lesson delivered naturally in 1-2 lines → Crew celebration + catchphrases.`;
 
+// ---- AUTH ----
+// TODO: confirm and swap in the real Railway backend URL (same pattern as
+// Book Creator's raw web-production-xxxxx.up.railway.app address).
+const API_BASE = 'https://web-production-fb994.up.railway.app/api';
+let currentUser = null;
+
+const TIER_INFO = [
+  { id: 'free',    label: 'Free',    price: 0,  sub: 'forever', features: ['1 video per month', 'Up to 15 seconds', '1 brand profile', 'Watermarked exports'] },
+  { id: 'creator', label: 'Creator', price: 29, sub: '/ month', features: ['10 videos per month', 'Up to 60 seconds', '3 brand profiles', 'No watermark'] },
+  { id: 'studio',  label: 'Studio',  price: 79, sub: '/ month', features: ['40 videos per month', 'Up to 3 minutes', '10 brand profiles', 'No watermark', 'Priority generation'] },
+];
+
+function showAuthMode(mode) {
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-login-form').style.display    = mode === 'login'  ? 'block' : 'none';
+  document.getElementById('auth-register-form').style.display = mode === 'register' ? 'block' : 'none';
+  document.getElementById('auth-forgot-form').style.display   = mode === 'forgot' ? 'block' : 'none';
+  document.getElementById('auth-forgot-sent').style.display   = 'none';
+  document.getElementById('auth-switch-login').style.display    = mode === 'login'  ? 'block' : 'none';
+  document.getElementById('auth-switch-register').style.display = mode === 'register' ? 'block' : 'none';
+  document.getElementById('auth-switch-forgot').style.display   = mode === 'forgot' ? 'block' : 'none';
+  document.getElementById('auth-title').textContent = mode === 'login' ? 'Welcome back' : mode === 'register' ? 'Create your account' : 'Reset password';
+  document.getElementById('auth-sub').textContent   = mode === 'login' ? 'Sign in to start creating content' : mode === 'register' ? 'Start free, 1 video a month, no card needed' : 'Enter your email and we will send a reset link';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const res = await fetch(API_BASE + '/auth/login', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-password').value,
+      }),
+    });
+    const data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.detail || 'Invalid email or password');
+    currentUser = data;
+    onAuthed();
+  } catch (err) {
+    showAuthError(err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+  return false;
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('register-submit-btn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    const res = await fetch(API_BASE + '/auth/register', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('register-name').value,
+        email: document.getElementById('register-email').value,
+        password: document.getElementById('register-password').value,
+      }),
+    });
+    const data = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error(data.detail || 'Could not create account');
+    currentUser = data;
+    onAuthed();
+  } catch (err) {
+    showAuthError(err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Free Account';
+  }
+  return false;
+}
+
+async function doForgotPassword(e) {
+  e.preventDefault();
+  const btn = document.getElementById('forgot-submit-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    await fetch(API_BASE + '/auth/forgot-password', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: document.getElementById('forgot-email').value }),
+    });
+  } catch (err) {}
+  document.getElementById('auth-forgot-form').style.display = 'none';
+  document.getElementById('auth-forgot-sent').style.display = 'block';
+  btn.disabled = false; btn.textContent = 'Send Reset Link';
+  return false;
+}
+
+async function logout() {
+  try { await fetch(API_BASE + '/auth/logout', { method: 'POST', credentials: 'include' }); } catch (e) {}
+  currentUser = null;
+  document.getElementById('app-header').style.display = 'none';
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('screen-auth').classList.add('active');
+  showAuthMode('login');
+}
+
+function onAuthed() {
+  document.getElementById('app-header').style.display = 'flex';
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('screen-dashboard').classList.add('active');
+  init();
+  renderPricingCards();
+}
+
+async function checkExistingSession() {
+  try {
+    const res = await fetch(API_BASE + '/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      currentUser = await res.json();
+      onAuthed();
+      return;
+    }
+  } catch (e) {}
+  showAuthMode('login');
+}
+
+function renderPricingCards() {
+  const wrap = document.getElementById('pricing-cards');
+  var html = '';
+  TIER_INFO.forEach(function(t) {
+    var isCurrent = currentUser && currentUser.tier === t.id;
+    var featuresHtml = t.features.map(function(f){ return '<li>check ' + f + '</li>'; }).join('');
+    var buttonHtml;
+    if (isCurrent) {
+      buttonHtml = '<button class="auth-btn" style="opacity:.6" disabled>Current plan</button>';
+    } else if (t.price === 0) {
+      buttonHtml = '<button class="auth-btn" onclick="switchTab(\'dashboard\')">Get started</button>';
+    } else {
+      buttonHtml = '<button class="auth-btn" onclick="startCheckout(\'' + t.id + '\')">Choose ' + t.label + '</button>';
+    }
+    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;width:230px;' + (isCurrent ? 'border-color:var(--purple)' : '') + '">' +
+      '<div style="font-weight:800;font-size:18px;color:#fff">' + t.label + '</div>' +
+      '<div style="font-size:32px;font-weight:800;color:#fff;margin:12px 0">$' + t.price + '<span style="font-size:13px;color:var(--muted);font-weight:500"> ' + t.sub + '</span></div>' +
+      '<ul style="list-style:none;padding:0;margin:0 0 20px;color:var(--muted);font-size:13px;line-height:2">' + featuresHtml + '</ul>' +
+      buttonHtml + '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+async function startCheckout(tier) {
+  try {
+    const res = await fetch(API_BASE + '/billing/checkout', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier: tier, billing: 'monthly' }),
+    });
+    const data = await res.json().catch(function(){ return {}; });
+    if (!res.ok || !data.checkout_url) throw new Error(data.detail || 'Could not start checkout');
+    window.location.href = data.checkout_url;
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
 // ========== INIT ==========
 function init() {
   renderCharacters();
@@ -446,7 +699,7 @@ function init() {
     }
   });
 }
-window.onload = init;
+window.onload = checkExistingSession;
 
 function switchTab(tab) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
