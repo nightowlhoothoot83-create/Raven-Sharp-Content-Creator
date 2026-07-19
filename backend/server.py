@@ -100,8 +100,8 @@ if not (R2_ENDPOINT and R2_ACCESS_KEY and R2_SECRET_KEY):
 # user is happy with the script and asks for the actual render.
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 RUNWARE_API_KEY = os.environ.get("RUNWARE_API_KEY", "")
-RUNWARE_MODEL = os.environ.get("RUNWARE_MODEL", "runware:101@1")  # image generation — verify against your dashboard
-RUNWARE_BGREMOVE_MODEL = os.environ.get("RUNWARE_BGREMOVE_MODEL", "runware:110@1")  # verify against your dashboard
+RUNWARE_MODEL = os.environ.get("RUNWARE_MODEL", "runware:z-image@turbo")  # image generation — verified real model
+RUNWARE_BGREMOVE_MODEL = os.environ.get("RUNWARE_BGREMOVE_MODEL", "runware:112@1")  # BiRefNet — verified real model
 if not GEMINI_API_KEY:
     _startup_warnings.append(
         "GEMINI_API_KEY was not set — /api/generate/script will return a clear 500 error. "
