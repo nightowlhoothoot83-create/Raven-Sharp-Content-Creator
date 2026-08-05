@@ -180,13 +180,13 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
 <style>
 .raven-public-info{max-width:1100px;margin:32px auto 0;padding:56px 24px;color:#f4f4ff}.raven-public-info>h1,.raven-public-info>h2{text-align:center;font-family:'Cabinet Grotesk','Outfit',sans-serif;font-size:clamp(2rem,4vw,3rem);margin:0 0 16px}.raven-public-info>p{max-width:760px;margin:0 auto 32px;text-align:center;color:#9ba3d9}.raven-info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}.raven-info-grid article,.raven-faq{background:linear-gradient(145deg,rgba(23,23,50,.95),rgba(14,14,31,.95));border:1px solid rgba(167,139,250,.24);border-radius:18px;padding:24px;box-shadow:0 16px 38px rgba(56,189,248,.07)}.raven-info-grid h2,.raven-faq h2{font-size:1.2rem;color:#ffc857;margin:0 0 12px}.raven-info-grid li{margin:.55rem 0;color:#c4c8ea}.raven-faq{margin-top:18px}.raven-faq h3{font-size:1rem;color:#a78bfa;margin:18px 0 5px}.raven-faq p{color:#c4c8ea}.raven-suite-links,.raven-legal-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:24px}.raven-suite-links a,.raven-legal-links a{color:#f4f4ff;text-decoration:none;border:1px solid rgba(167,139,250,.3);border-radius:999px;padding:8px 14px;background:rgba(124,92,191,.1)}.raven-suite-links a:hover,.raven-legal-links a:hover{border-color:#38bdf8;box-shadow:0 0 18px rgba(56,189,248,.22)}
 </style>
-</head>
+<style id="raven-shared-style">:root{--bg:#05050d!important;--card:#0e0e1f!important;--surface:#0e0e1f!important;--border:#23234d!important;--text:#f4f4ff!important;--muted:#9ba3d9!important;--purple:#7c5cbf!important;--slime:#a78bfa!important;--red:#ec4899!important;--gold:#ffc857!important;--blue:#38bdf8!important}body{background:radial-gradient(circle at 15% 10%,rgba(124,92,191,.18),transparent 30%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.12),transparent 28%),#05050d!important;color:#f4f4ff!important;font-family:'Outfit',system-ui,sans-serif!important}h1,h2,h3,.brand-title{font-family:'Cabinet Grotesk','Outfit',sans-serif!important}.brand-title{font-size:1.65rem;font-weight:900}.logo img,.brand-logo,img.logo{border-radius:12px!important;background:transparent!important}.btn,button,.cta-button{border-radius:12px!important}.btn:not(.secondary),button.primary,.cta-button{background:linear-gradient(135deg,#7c5cbf,#38bdf8)!important;color:#fff!important;box-shadow:0 0 24px rgba(167,139,250,.2)}header{border-bottom-color:rgba(167,139,250,.22)!important;background:rgba(5,5,13,.9)!important}</style></head>
 <body>
 
 <div class="header" id="app-header" style="display:none">
   <div class="logo-circle"><img src="/brands/ravenSharpLogo.png" alt="Raven Sharp" style="width:100%;height:100%;object-fit:contain"></div>
   <div>
-    <h1>Raven Sharp</h1>
+    <div class="brand-title" aria-label="Raven Sharp">Raven Sharp</div>
     <div class="header-sub">CONTENT CREATOR — VIDEO • REELS • CAROUSELS • POLLS</div>
   </div>
   <div class="tab-nav">
@@ -227,11 +227,11 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
       <form id="auth-login-form" onsubmit="return doLogin(event)">
         <div class="auth-field">
           <label>Email</label>
-          <input type="email" id="login-email" required placeholder="you@example.com">
+          <input aria-label="you@example.com" type="email" id="login-email" required placeholder="you@example.com">
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" id="login-password" required placeholder="********">
+          <input aria-label="********" type="password" id="login-password" required placeholder="********">
         </div>
         <div class="auth-forgot"><a onclick="showAuthMode('forgot')">Forgot password?</a></div>
         <button type="submit" class="auth-btn" id="login-submit-btn">Sign In</button>
@@ -240,15 +240,15 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
       <form id="auth-register-form" onsubmit="return doRegister(event)" style="display:none">
         <div class="auth-field">
           <label>Name</label>
-          <input type="text" id="register-name" placeholder="Your name">
+          <input aria-label="Your name" type="text" id="register-name" placeholder="Your name">
         </div>
         <div class="auth-field">
           <label>Email</label>
-          <input type="email" id="register-email" required placeholder="you@example.com">
+          <input aria-label="you@example.com" type="email" id="register-email" required placeholder="you@example.com">
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" id="register-password" required minlength="8" placeholder="At least 8 characters">
+          <input aria-label="At least 8 characters" type="password" id="register-password" required minlength="8" placeholder="At least 8 characters">
         </div>
         <button type="submit" class="auth-btn" id="register-submit-btn">Create Free Account</button>
       </form>
@@ -256,7 +256,7 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
       <form id="auth-forgot-form" onsubmit="return doForgotPassword(event)" style="display:none">
         <div class="auth-field">
           <label>Email address</label>
-          <input type="email" id="forgot-email" required placeholder="you@example.com">
+          <input aria-label="you@example.com" type="email" id="forgot-email" required placeholder="you@example.com">
         </div>
         <button type="submit" class="auth-btn" id="forgot-submit-btn">Send Reset Link</button>
       </form>
@@ -315,7 +315,7 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
   </div>
 
   <div class="section-title">1. Describe your idea (or use guided options below)</div>
-  <textarea id="main-prompt" class="prompt-box" placeholder="E.g. The crew finds a mysterious glowing slime puddle in the park that turns everything rainbow... Rizzy gets mad, Spewy tries a crazy skateboard trick, Milky accidentally fixes it with a big mess! Keep it 45-60 seconds, fun and heartwarming."></textarea>
+  <textarea aria-label="E.g. The crew finds a mysterious glowing slime puddle in the park that turns eve" id="main-prompt" class="prompt-box" placeholder="E.g. The crew finds a mysterious glowing slime puddle in the park that turns everything rainbow... Rizzy gets mad, Spewy tries a crazy skateboard trick, Milky accidentally fixes it with a big mess! Keep it 45-60 seconds, fun and heartwarming."></textarea>
   
   <div class="btn-row">
     <button class="btn-secondary" onclick="suggestPrompt()">✨ Suggest Prompt from Theme</button>
@@ -361,12 +361,12 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
   <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
     <label class="btn-secondary" style="cursor:pointer;padding:10px 16px;border-radius:12px">
       📤 Upload Reference Image or PDF
-      <input type="file" id="ref-upload" accept="image/*,.pdf" style="display:none" onchange="handleRefUpload(event)">
+      <input aria-label="ref upload" type="file" id="ref-upload" accept="image/*,.pdf" style="display:none" onchange="handleRefUpload(event)">
     </label>
     <span id="ref-status" style="font-size:12px;color:var(--muted)">No reference uploaded — using built-in brand DNA</span>
   </div>
   <div id="ref-preview" style="margin-top:8px;display:none">
-    <img id="ref-img" style="max-height:80px;border-radius:8px;border:2px solid var(--border)">
+    <img id="ref-img" alt="Uploaded content reference preview" style="max-height:80px;border-radius:8px;border:2px solid var(--border)">
     <span id="ref-name" style="font-size:12px;margin-left:8px;color:var(--muted)"></span>
   </div>
 
@@ -505,21 +505,21 @@ h2{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif;font-size:24px;ma
   <h2>⚙️ Settings &amp; Canon</h2>
   
   <div class="section-title">Gemini Worker (already secure)</div>
-  <input id="worker-url" value="https://spewcrewbookcreator.ascensiondigitalagency.workers.dev" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;padding:10px;color:#fff">
+  <input aria-label="worker url" id="worker-url" value="https://spewcrewbookcreator.ascensiondigitalagency.workers.dev" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:10px;padding:10px;color:#fff">
   
   <div class="section-title" style="margin-top:16px">Higgsfield Character Elements (for perfect consistency)</div>
   <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Create these once using the character-refs images in the handoff ZIP. Paste the element_ids here. The app will include them in prompts.</p>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-    <div><label style="font-size:11px;color:var(--muted)">Rizzy Element ID</label><input id="higgs-rizzy" placeholder="e.g. elem_rizzy_abc123" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
-    <div><label style="font-size:11px;color:var(--muted)">Spewy Element ID</label><input id="higgs-spewy" placeholder="e.g. elem_spewy_def456" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
-    <div><label style="font-size:11px;color:var(--muted)">Milky Element ID</label><input id="higgs-milky" placeholder="e.g. elem_milky_ghi789" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
+    <div><label style="font-size:11px;color:var(--muted)">Rizzy Element ID</label><input aria-label="e.g. elem rizzy abc123" id="higgs-rizzy" placeholder="e.g. elem_rizzy_abc123" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
+    <div><label style="font-size:11px;color:var(--muted)">Spewy Element ID</label><input aria-label="e.g. elem spewy def456" id="higgs-spewy" placeholder="e.g. elem_spewy_def456" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
+    <div><label style="font-size:11px;color:var(--muted)">Milky Element ID</label><input aria-label="e.g. elem milky ghi789" id="higgs-milky" placeholder="e.g. elem_milky_ghi789" style="width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:8px;color:#fff;font-size:12px"></div>
   </div>
   <div style="font-size:11px;color:#f59e0b;margin-top:6px">Tip: If empty, the app falls back to detailed text descriptions + Gemini images for good (but not perfect) consistency.</div>
 
   <div class="section-title" style="margin-top:16px">Character Canon (powers/abilities)</div>
   <div style="display:flex;gap:12px">
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="canon" value="blueprint" checked onchange="updateCanon()"> <span>Blueprint (Rainbow Rage, Skater Sense, Messy Mayhem)</span></label>
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="canon" value="spew" onchange="updateCanon()"> <span>Spew Literal (Reflux Blast, Spew Jets, Milk Geyser)</span></label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input aria-label="radio" type="radio" name="canon" value="blueprint" checked onchange="updateCanon()"> <span>Blueprint (Rainbow Rage, Skater Sense, Messy Mayhem)</span></label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input aria-label="radio" type="radio" name="canon" value="spew" onchange="updateCanon()"> <span>Spew Literal (Reflux Blast, Spew Jets, Milk Geyser)</span></label>
   </div>
   <div style="font-size:11px;color:var(--muted);margin-top:4px">This affects every scene description. Choose once and keep consistent across books + videos.</div>
 
@@ -1215,17 +1215,17 @@ function renderScriptEditor() {
       </div>
       <div class="scene-field">
         <label>Action / What happens</label>
-        <textarea id="scene-action-${index}">${scene.action || ''}</textarea>
+        <textarea aria-label="scene action item" id="scene-action-${index}">${scene.action || ''}</textarea>
       </div>
       <div class="scene-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
           <label>Voiceover / Caption</label>
-          <textarea id="scene-voice-${index}" style="min-height:70px">${scene.voiceover || ''}</textarea>
+          <textarea aria-label="scene voice item" id="scene-voice-${index}" style="min-height:70px">${scene.voiceover || ''}</textarea>
         </div>
         <div>
           <label>Emotion &amp; SFX</label>
-          <input id="scene-emotion-${index}" value="${scene.emotion || ''}" placeholder="excited / frustrated">
-          <input id="scene-sfx-${index}" value="${scene.sfx || ''}" placeholder="SPLAT! WHOOSH!" style="margin-top:6px">
+          <input aria-label="excited / frustrated" id="scene-emotion-${index}" value="${scene.emotion || ''}" placeholder="excited / frustrated">
+          <input aria-label="SPLAT! WHOOSH!" id="scene-sfx-${index}" value="${scene.sfx || ''}" placeholder="SPLAT! WHOOSH!" style="margin-top:6px">
         </div>
       </div>
       <div style="font-size:10px;color:var(--muted);margin-top:4px">Duration: ~${scene.duration || 8}s</div>
