@@ -24,8 +24,11 @@ jobs:
     - name: Install backend dependencies
       run: pip install -r backend/requirements.txt
 
-    - name: Sanity-import the backend app
+    - name: Sanity-import the backend app and production extensions
       working-directory: backend
       env:
         MONGO_URL: "mongodb://localhost:27017/ci_dummy"
-      run: python -c "import server; print('server.py imports cleanly')"
+      run: |
+        python -c "import server; print('server.py imports cleanly')"
+        python -c "import app_v2; print('app_v2.py imports cleanly')"
+        python -m py_compile server.py app_v2.py
