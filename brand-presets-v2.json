@@ -1,0 +1,65 @@
+{
+  "version": 2,
+  "purpose": "Authoritative starting presets for Raven Sharp finished-content production. Uploaded brand bibles, logos and reference assets extend these presets and remain user-controlled.",
+  "brands": [
+    {
+      "name": "Zyia Creations",
+      "role": "Digital products, practical guides, templates and creator/business systems",
+      "brand_bible": "Zyia Creations is a practical, polished digital-products brand. Current content should support useful guides, protection packs, compliance/checklist products, pricing systems and creator/business resources. Voice: capable, clear, useful, premium without being stuffy, and focused on helping the customer understand what the product solves. Avoid the old cosmic/spiritual framing as the default product voice. Visual identity: use the current rainbow barn owl brand mark as the primary identity, with clean layouts and controlled rainbow accents rather than visual clutter. Content should be finished and ready to publish, with exact readable text overlays and a clear next action.",
+      "primary_color": "#111111",
+      "secondary_color": "#A78BFA",
+      "outputs": ["post", "meme", "poll", "carousel", "reel", "short"],
+      "content_rules": [
+        "Lead with the customer problem or useful outcome, not generic hype.",
+        "Keep overlay text concise and legible.",
+        "Use current uploaded logo/brand assets when available.",
+        "Do not silently change product facts, prices or compliance claims."
+      ]
+    },
+    {
+      "name": "Feed the Feed",
+      "role": "Art, truth, social commentary and digital-culture content",
+      "brand_bible": "Feed the Feed is a sharp social-commentary and digital-culture brand. Voice: observant, satirical, provocative and thoughtful rather than generic motivational copy. The content can feel slightly dystopian or unsettling when the subject calls for it, but should still communicate a coherent point. Visual identity: high-contrast dark layouts, restrained red accents, bold readable typography and strong editorial composition. The engine should output finished memes, posts, polls, carousels, reels and shorts rather than prompt instructions.",
+      "primary_color": "#111111",
+      "secondary_color": "#DC2626",
+      "outputs": ["post", "meme", "poll", "carousel", "reel", "short"],
+      "content_rules": [
+        "Make the central idea understandable without relying on a long caption.",
+        "Use satire to illuminate a point, not to fabricate factual claims.",
+        "Render all headline and poll text with exact typography after image generation.",
+        "Prefer a strong single visual idea over clutter."
+      ]
+    },
+    {
+      "name": "Spew Crew Kids",
+      "role": "Preschool and early-primary character entertainment",
+      "brand_bible": "Spew Crew Kids targets roughly ages 3 to 7. Core themes include friendship, emotions, learning, songs, helping, sharing, slime/spew and safe gross-out comedy. Tone: funny, energetic, warm, silly, musical and emotionally supportive. Visual language: graffiti preschool, slime cartoon and skatepark colour burst with bold comic outlines and expressive faces. Character consistency overrides all other visual instructions. Keep the comedy gross-but-safe and child-friendly. Never drift into horror, realistic injury, adult jokes, sexual content, bullying or unsafe dares. Do not redesign established proportions, colours, faces, personalities or silhouettes.",
+      "primary_color": "#4ADE80",
+      "secondary_color": "#E53E3E",
+      "outputs": ["video", "reel", "short"],
+      "characters": [
+        {
+          "name": "Rizzy Reflux",
+          "description": "Red fuzzy/chubby monster girl; large rainbow bow; black Spew Crew shirt; purple skirt; rainbow striped leggings; red sneakers. Bold, protective and emotionally expressive. Preserve her established red body, bow, clothing and silhouette exactly.",
+          "reference_required": true
+        },
+        {
+          "name": "Spewy Spence",
+          "description": "Bright green slime-bodied/chubby monster boy; backwards black cap; black Spew Crew shirt; blue jeans; black sneakers; skateboard. Hyper, cheeky, adventurous and loyal. Preserve green body, cap, clothing, board and silhouette exactly.",
+          "reference_required": true
+        },
+        {
+          "name": "Milky Matt",
+          "description": "Cream-coloured established character with red pacifier and blue tracksuit. Gentle heart of the group. Preserve established cream body, face, pacifier, tracksuit and silhouette exactly.",
+          "reference_required": true
+        }
+      ],
+      "content_rules": [
+        "Use uploaded book pages and character reference images as visual anchors.",
+        "For book videos, preserve page order, story meaning and character canon.",
+        "Use exact code-rendered captions rather than asking a video model to draw text.",
+        "Default ordinary book pages to low-cost pan/zoom motion and reserve AI animation for selected hero scenes."
+      ]
+    }
+  ]
+}
