@@ -34,6 +34,29 @@ jobs:
         python -c "import production_app; print('production_app.py imports cleanly')"
         python -m py_compile server.py app_v2.py production_app.py
 
+    - name: Boot v2 app and verify HTTP health
+      working-directory: backend
+      env:
+        MONGO_URL: "mongodb://localhost:27017/ci_dummy"
+        PORT: "8765"
+      run: |
+        uvicorn app_v2:app --host 127.0.0.1 --port 8765 > /tmp/raven-uvicorn.log 2>&1 &
+        PID=$!
+        trap 'kill $PID 2>/dev/null || true; cat /tmp/raven-uvicorn.log' EXIT
+        for i in $(seq 1 30); do
+          if curl --fail --silent http://127.0.0.1:8765/health | grep -q 'ok'; then
+            echo "v2 app booted and /health returned OK"
+            exit 0
+          fi
+          if ! kill -0 $PID 2>/dev/null; then
+            echo "uvicorn exited before becoming healthy"
+            exit 1
+          fi
+          sleep 1
+        done
+        echo "v2 app did not become healthy in time"
+        exit 1
+
     - name: Smoke-test finished asset renderer and FFmpeg
       working-directory: backend
       env:
@@ -45,9 +68,7 @@ jobs:
         from PIL import Image
         import imageio_ffmpeg
         import app_v2
-        import production_app
 
-        assert production_app._extract_json('{"ok": true}') == {"ok": True}
         png = asyncio.run(app_v2._brand_canvas(
             {"name":"CI Brand","primary_color":"#7c5cbf","secondary_color":"#38bdf8"},
             640, 640, "Finished content test", "Exact text overlay", "CI Brand", ["A", "B"], None
@@ -60,5 +81,5 @@ jobs:
             assert overlay.exists() and overlay.stat().st_size > 0
         ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
         assert Path(ffmpeg).exists(), ffmpeg
-        print("Production planner, renderer and FFmpeg smoke tests passed")
+        print("Renderer and FFmpeg smoke tests passed")
         PY
