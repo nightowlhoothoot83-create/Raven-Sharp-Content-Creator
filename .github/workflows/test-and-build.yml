@@ -31,7 +31,8 @@ jobs:
       run: |
         python -c "import server; print('server.py imports cleanly')"
         python -c "import app_v2; print('app_v2.py imports cleanly')"
-        python -m py_compile server.py app_v2.py
+        python -c "import production_app; print('production_app.py imports cleanly')"
+        python -m py_compile server.py app_v2.py production_app.py
 
     - name: Smoke-test finished asset renderer and FFmpeg
       working-directory: backend
@@ -44,7 +45,9 @@ jobs:
         from PIL import Image
         import imageio_ffmpeg
         import app_v2
+        import production_app
 
+        assert production_app._extract_json('{"ok": true}') == {"ok": True}
         png = asyncio.run(app_v2._brand_canvas(
             {"name":"CI Brand","primary_color":"#7c5cbf","secondary_color":"#38bdf8"},
             640, 640, "Finished content test", "Exact text overlay", "CI Brand", ["A", "B"], None
@@ -57,5 +60,5 @@ jobs:
             assert overlay.exists() and overlay.stat().st_size > 0
         ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
         assert Path(ffmpeg).exists(), ffmpeg
-        print("Renderer and FFmpeg smoke tests passed")
+        print("Production planner, renderer and FFmpeg smoke tests passed")
         PY
