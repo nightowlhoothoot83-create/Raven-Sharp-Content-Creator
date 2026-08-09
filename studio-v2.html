@@ -12,7 +12,7 @@
 <header><div class="wrap nav"><img src="/brands/ravenSharpLogo.png" alt="Raven Sharp"><div class="brand"><b>Raven Sharp</b><span>Production Studio v2</span></div><div class="pill" id="user-pill">Checking account…</div></div></header>
 <main class="wrap">
 <section class="hero"><span class="tag">OUTPUT ENGINE</span><h1>Finished content, not prompt homework.</h1><p>Choose a saved brand, describe what you need, and Raven Sharp builds the actual social asset. Text overlays are rendered by code for exact spelling. AI is used only for the parts that benefit from it.</p></section>
-<div id="login-card" class="card hidden" style="max-width:460px;margin:auto"><h2>Sign in</h2><label class="label">Email</label><input id="email" type="email"><label class="label">Password</label><input id="password" type="password"><button class="btn" style="margin-top:14px" onclick="login()">Sign In</button><div class="status" id="login-status"></div></div>
+<div id="login-card" class="card hidden" style="max-width:460px;margin:auto"><h2 id="auth-heading">Sign in</h2><div id="name-row" class="hidden"><label class="label">Name</label><input id="name" autocomplete="name"></div><label class="label">Email</label><input id="email" type="email" autocomplete="email"><label class="label">Password</label><input id="password" type="password" autocomplete="current-password"><button class="btn" id="auth-button" style="margin-top:14px" onclick="submitAuth()">Sign In</button><button class="btn secondary" id="auth-toggle" style="margin-top:14px" onclick="toggleAuth()">Create an account</button><div class="status" id="login-status"></div></div>
 <div id="studio" class="grid hidden">
 <aside class="card">
 <h2>1. Brand lock</h2>
@@ -41,16 +41,22 @@
 </section>
 </div>
 </main>
+<footer style="padding:28px 20px;text-align:center;border-top:1px solid var(--line);background:#05070d;color:var(--muted);font-size:12px"><b style="display:block;color:var(--text);font-size:16px;margin-bottom:5px">Ascension Digital Group</b>Raven Sharp Content Creator · <a href="/" style="color:var(--glow,#a78bfa)">Product, features &amp; pricing</a> · <a href="https://raven-sharp.com" style="color:var(--glow,#a78bfa)">Explore all Raven Sharp tools</a></footer>
 <script>
-const API='https://web-production-fb994.up.railway.app/api';
+const API='https://content.raven-sharp.com/api';
+const requestedTier=new URLSearchParams(location.search).get('tier');
+let authMode=location.hash==='#register'?'register':'login';
 let user=null, profiles=[], selectedProfile=null, outputFormat='post', importedBook=null;
 const $=id=>document.getElementById(id);
 async function api(path,opts={}){const res=await fetch(API+path,{credentials:'include',...opts,headers:{'Content-Type':'application/json',...(opts.headers||{})}});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.detail||data.message||('Request failed '+res.status));return data}
 function setStatus(t,p){$('status').textContent=t||'';if(p!=null)$('bar').style.width=p+'%'}
 function cleanJSON(raw){let s=String(raw||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();const a=s.indexOf('{'),b=s.lastIndexOf('}');if(a>=0&&b>a)s=s.slice(a,b+1);return JSON.parse(s)}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function init(){document.querySelectorAll('.format').forEach(el=>el.onclick=()=>{document.querySelectorAll('.format').forEach(x=>x.classList.remove('active'));el.classList.add('active');outputFormat=el.dataset.format});try{user=await api('/auth/me');$('user-pill').textContent=user.email;$('studio').classList.remove('hidden');await loadProfiles();await importBookFromURL()}catch(e){$('user-pill').textContent='Sign in required';$('login-card').classList.remove('hidden')}}
-async function login(){try{await api('/auth/login',{method:'POST',body:JSON.stringify({email:$('email').value,password:$('password').value})});location.reload()}catch(e){$('login-status').textContent=e.message}}
+async function init(){document.querySelectorAll('.format').forEach(el=>el.onclick=()=>{document.querySelectorAll('.format').forEach(x=>x.classList.remove('active'));el.classList.add('active');outputFormat=el.dataset.format});try{user=await api('/auth/me');$('user-pill').textContent=user.email;$('studio').classList.remove('hidden');await loadProfiles();await importBookFromURL();await maybeCheckout()}catch(e){$('user-pill').textContent='Sign in required';$('login-card').classList.remove('hidden');renderAuth()}}
+function renderAuth(){$('auth-heading').textContent=authMode==='register'?'Create your account':'Sign in';$('auth-button').textContent=authMode==='register'?'Create Account':'Sign In';$('auth-toggle').textContent=authMode==='register'?'Already registered? Sign in':'Create an account';$('name-row').classList.toggle('hidden',authMode!=='register');$('password').autocomplete=authMode==='register'?'new-password':'current-password'}
+function toggleAuth(){authMode=authMode==='register'?'login':'register';renderAuth()}
+async function submitAuth(){try{const path=authMode==='register'?'/auth/register':'/auth/login';await api(path,{method:'POST',body:JSON.stringify({name:$('name').value,email:$('email').value,password:$('password').value})});location.reload()}catch(e){$('login-status').textContent=e.message}}
+async function maybeCheckout(){if(!requestedTier)return;const r=await api('/billing/checkout',{method:'POST',body:JSON.stringify({tier:requestedTier,billing:'monthly'})});if(r.checkout_url)location.href=r.checkout_url}
 async function loadProfiles(){profiles=await api('/brand-profiles');const select=$('brand-select');select.innerHTML='<option value="">Choose a brand…</option>'+profiles.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');if(profiles.length){select.value=profiles[0].id;selectBrand()}}
 function selectBrand(){selectedProfile=profiles.find(p=>p.id===$('brand-select').value)||null;const p=selectedProfile;$('brand-preview').innerHTML=p?`${p.logo_url?`<img src="${p.logo_url}" alt="">`:''}<div><b>${escapeHtml(p.name)}</b><br><small style="color:var(--muted)">${escapeHtml((p.brand_bible||'').slice(0,90))}</small></div>`:'';if(p){$('brand-name').value=p.name||'';$('brand-bible').value=p.brand_bible||'';$('brand-primary').value=p.primary_color||'#7c5cbf';$('brand-secondary').value=p.secondary_color||'#38bdf8'}}
 function toggleBrandForm(){$('brand-form').classList.toggle('hidden')}
