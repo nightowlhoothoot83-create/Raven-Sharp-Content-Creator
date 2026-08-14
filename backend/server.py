@@ -429,14 +429,32 @@ async def register(payload: RegisterIn, response: Response):
     access, refresh = make_access(user["id"], email), make_refresh(user["id"])
     set_cookies(response, access, refresh)
     return {"id": user["id"], "email": email, "name": user["name"],
-            "tier": tier, "videos_this_month": 0, "created_at": user["created_at"]}
+            "tier": tier, "videos_this_month": 0, "created_at": user.get("created_at", datetime.now(timezone.utc).isoformat())}
 
 @api.post("/auth/login")
 async def login(payload: LoginIn, response: Response):
     email = payload.email.lower().strip()
     user = await db.users.find_one({"email": email})
-    if not user or not verify_pw(payload.password, user["password_hash"]):
+    if not user:
         raise HTTPException(401, "Invalid email or password")
+    stored_hash = user.get("password_hash") or user.get("hashed_password")
+    legacy_plain = user.get("password")
+    valid = False
+    if stored_hash:
+        try:
+            valid = verify_pw(payload.password, stored_hash)
+        except Exception:
+            valid = False
+    elif isinstance(legacy_plain, str) and hmac.compare_digest(payload.password, legacy_plain):
+        valid = True
+        stored_hash = hash_pw(payload.password)
+        await db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": stored_hash}, "$unset": {"password": "", "hashed_password": ""}})
+    if not valid:
+        raise HTTPException(401, "Invalid email or password")
+    if email == OWNER_EMAIL.lower() and user.get("tier") != "owner":
+        await db.users.update_one({"_id": user["_id"]}, {"$set": {"tier": "owner", "name": user.get("name") or "Emma James"}})
+        user["tier"] = "owner"
+        user["name"] = user.get("name") or "Emma James"
     access, refresh = make_access(user["id"], email), make_refresh(user["id"])
     set_cookies(response, access, refresh)
     return {"id": user["id"], "email": email, "name": user.get("name"),
