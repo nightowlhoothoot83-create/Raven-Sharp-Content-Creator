@@ -1,0 +1,32 @@
+name: Hotfix Content Creator login 500
+on:
+  push:
+    paths: ['.github/workflows/hotfix-login-500-20260815.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch legacy login compatibility
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('backend/server.py'); s=p.read_text()
+          old='''    user = await db.users.find_one({"email": email})\n    if not user or not verify_pw(payload.password, user["password_hash"]):\n        raise HTTPException(401, "Invalid email or password")\n    access, refresh = make_access(user["id"], email), make_refresh(user["id"])\n'''
+          new='''    user = await db.users.find_one({"email": email})\n    if not user:\n        raise HTTPException(401, "Invalid email or password")\n    stored_hash = user.get("password_hash") or user.get("hashed_password")\n    legacy_plain = user.get("password")\n    valid = False\n    if stored_hash:\n        try:\n            valid = verify_pw(payload.password, stored_hash)\n        except Exception:\n            valid = False\n    elif isinstance(legacy_plain, str) and hmac.compare_digest(payload.password, legacy_plain):\n        valid = True\n        stored_hash = hash_pw(payload.password)\n        await db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": stored_hash}, "$unset": {"password": "", "hashed_password": ""}})\n    if not valid:\n        raise HTTPException(401, "Invalid email or password")\n    if email == OWNER_EMAIL.lower() and user.get("tier") != "owner":\n        await db.users.update_one({"_id": user["_id"]}, {"$set": {"tier": "owner", "name": user.get("name") or "Emma James"}})\n        user["tier"] = "owner"\n        user["name"] = user.get("name") or "Emma James"\n    access, refresh = make_access(user["id"], email), make_refresh(user["id"])\n'''
+          if old not in s and 'stored_hash = user.get("password_hash")' not in s: raise SystemExit('login marker missing')
+          if old in s: s=s.replace(old,new,1)
+          s=s.replace('"created_at": user["created_at"]}', '"created_at": user.get("created_at", datetime.now(timezone.utc).isoformat())}', 1)
+          p.write_text(s)
+      - name: Verify
+        run: python -m py_compile backend/server.py
+      - name: Commit
+        run: |
+          git config user.name 'Raven Repair Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add backend/server.py
+          git diff --cached --quiet || (git commit -m 'Fix Content Creator legacy account login 500' && git push)
