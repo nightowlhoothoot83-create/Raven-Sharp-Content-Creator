@@ -1,0 +1,35 @@
+name: Fix complete owner legacy login
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-owner-legacy-login-20260815.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Harden legacy owner records
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('backend/server.py')
+          s=p.read_text()
+          old='''    if email == OWNER_EMAIL.lower() and user.get("tier") != "owner":\n        await db.users.update_one({"_id": user["_id"]}, {"$set": {"tier": "owner", "name": user.get("name") or "Emma James"}})\n        user["tier"] = "owner"\n        user["name"] = user.get("name") or "Emma James"\n    access, refresh = make_access(user["id"], email), make_refresh(user["id"])\n'''
+          new='''    legacy_updates = {}\n    if not user.get("id"):\n        user["id"] = str(uuid.uuid4())\n        legacy_updates["id"] = user["id"]\n    if not user.get("created_at"):\n        user["created_at"] = datetime.now(timezone.utc).isoformat()\n        legacy_updates["created_at"] = user["created_at"]\n    if email == OWNER_EMAIL.lower():\n        if user.get("tier") != "owner":\n            user["tier"] = "owner"\n            legacy_updates["tier"] = "owner"\n        if not user.get("name"):\n            user["name"] = "Emma James"\n            legacy_updates["name"] = "Emma James"\n    if legacy_updates:\n        await db.users.update_one({"_id": user["_id"]}, {"$set": legacy_updates})\n    access, refresh = make_access(user["id"], email), make_refresh(user["id"])\n'''
+          if old not in s:
+              raise SystemExit('legacy login marker missing')
+          s=s.replace(old,new,1)
+          s=s.replace('"created_at": user["created_at"]}', '"created_at": user.get("created_at", datetime.now(timezone.utc).isoformat())}', 2)
+          p.write_text(s)
+      - name: Verify
+        run: python -m py_compile backend/server.py
+      - name: Commit
+        run: |
+          git config user.name 'Raven Repair Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add backend/server.py
+          git diff --cached --quiet || (git commit -m 'Fully repair legacy owner login records' && git push)
