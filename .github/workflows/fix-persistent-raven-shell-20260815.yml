@@ -1,0 +1,37 @@
+name: Fix persistent Raven Sharp shell
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-persistent-raven-shell-20260815.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch studio shell
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('studio-v2.html'); s=p.read_text()
+          css='''\n/* Persistent approved Raven Sharp shell */\nheader{background:rgba(8,8,16,.88)!important;border-bottom:1px solid rgba(255,255,255,.08)!important;backdrop-filter:blur(18px)}\n.nav{min-height:64px!important}.nav img{width:44px!important;height:44px!important;filter:drop-shadow(0 0 8px rgba(124,92,191,.4));border-radius:0!important}\n.brand b{font-family:'Cabinet Grotesk','Outfit',sans-serif;font-size:18px!important;font-weight:800;letter-spacing:-.025em;line-height:1;color:#f4f4ff}.brand b .raven-accent{color:#a78bfa}\n.brand span{display:block;margin-top:4px;font:500 9px/1 'DM Mono',monospace!important;letter-spacing:.2em!important;color:#38bdf8!important;text-transform:uppercase}\n.pill{border-color:rgba(167,139,250,.22)!important;background:rgba(255,255,255,.03)}\n#login-card{margin-top:18px!important;border-color:rgba(167,139,250,.28)!important;box-shadow:0 24px 80px rgba(0,0,0,.35)}\n#login-card:before{content:'';display:block;width:112px;height:112px;margin:0 auto 16px;background:url('/brands/ravenCentre.png') center/contain no-repeat;filter:drop-shadow(0 0 28px rgba(124,92,191,.45))}\n.rs-studio-footer{margin-top:64px;padding:38px 20px 26px;background:#0e0e1a;border-top:1px solid rgba(255,255,255,.08);text-align:center;color:#9ba3d9}.rs-studio-footer .suite{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:18px auto}.rs-studio-footer a{color:#9ba3d9;text-decoration:none;font-size:12px}.rs-studio-footer .suite a:first-child{color:#38bdf8}\n@media(max-width:520px){.pill{font-size:10px;padding:6px 8px}.nav{gap:9px}.brand b{font-size:16px!important}}\n'''
+          if 'Persistent approved Raven Sharp shell' not in s: s=s.replace('</style>',css+'</style>',1)
+          s=s.replace('<div class="brand"><b>Raven Sharp</b><span>Content Creator</span></div>', '<div class="brand"><b>RAVEN <span class="raven-accent">SHARP</span></b><span>Content Creator</span></div>')
+          old='<footer style="padding:28px 20px;text-align:center;border-top:1px solid var(--line);background:#05070d;color:var(--muted);font-size:12px"><b style="display:block;color:var(--text);font-size:16px;margin-bottom:5px">Ascension Digital Group</b>Raven Sharp Content Creator · <a href="/" style="color:var(--glow,#a78bfa)">Product, features &amp; pricing</a> · <a href="https://raven-sharp.com" style="color:var(--glow,#a78bfa)">Explore all Raven Sharp tools</a></footer>'
+          new='<footer class="rs-studio-footer"><b style="display:block;color:#fff;font-size:16px;margin-bottom:5px">Ascension Digital Group</b><div>Raven Sharp Content Creator</div><nav class="suite" aria-label="Raven Sharp suite"><a href="https://raven-sharp.com">Raven Sharp Home</a><a href="https://pod.raven-sharp.com">POD Automation</a><a href="https://opt.raven-sharp.com">Image Optimiser</a><a href="https://books.raven-sharp.com">Book Creator</a><a href="https://content.raven-sharp.com">Content Creator</a><a href="https://ads.raven-sharp.com">Ad Manager</a><a href="https://cleaner.raven-sharp.com">Smart Cleaner</a></nav><div style="font-size:11px">© 2026 Ascension Digital Group</div></footer>'
+          if old in s: s=s.replace(old,new,1)
+          p.write_text(s)
+      - name: Verify
+        run: |
+          grep -q 'Persistent approved Raven Sharp shell' studio-v2.html
+          grep -q 'RAVEN <span class="raven-accent">SHARP' studio-v2.html
+      - name: Commit
+        run: |
+          git config user.name 'Raven Repair Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add studio-v2.html
+          git diff --cached --quiet || git commit -m 'Keep Raven Sharp branding across Content Creator studio and sign-in'
+          git push
