@@ -1,0 +1,41 @@
+name: Persist Raven Sharp shell - Content Creator
+on:
+  push:
+    paths:
+      - '.github/workflows/persist-raven-shell-20260815.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - name: Patch studio shell
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('studio-v2.html'); s=p.read_text()
+          if 'api.fontshare.com/v2/css' not in s:
+              s=s.replace('</head>','<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800,900&display=swap" rel="stylesheet">\n</head>',1)
+          css='''\n/* Persistent approved Raven Sharp shell */\nheader.rs-app-header{position:sticky;top:0;z-index:20;background:rgba(8,8,16,.94);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.08)}\n.rs-top{min-height:64px;display:flex;align-items:center;gap:12px}.rs-top>img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(124,92,191,.4))}\n.rs-brand{font-family:'Cabinet Grotesk','Outfit',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.025em;line-height:1}.rs-brand strong{color:#a78bfa}.rs-brand small{display:block;margin-top:4px;font:500 9px/1 'DM Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8}\n.rs-nav-home{margin-left:auto;color:var(--muted);text-decoration:none;font-size:12px;font-weight:700}.rs-nav-home:hover{color:#fff}.rs-top .pill{margin-left:0}.auth-raven{text-align:center;margin:-6px 0 12px}.auth-raven img{width:92px;height:92px;object-fit:contain;filter:drop-shadow(0 0 22px rgba(124,92,191,.45))}\nh1,h2,h3,h4{font-family:'Cabinet Grotesk','Outfit',system-ui,sans-serif}@media(max-width:560px){.rs-nav-home{display:none}.rs-top .pill{font-size:10px;padding:6px 8px}}\n'''
+          if 'Persistent approved Raven Sharp shell' not in s:
+              s=s.replace('</style>',css+'</style>',1)
+          old='<header><div class="wrap nav"><img src="/brands/ravenSharpLogo.png" alt="Raven Sharp"><div class="brand"><b>Raven Sharp</b><span>Content Creator</span></div><div class="pill" id="user-pill">Checking account…</div></div></header>'
+          new='<header class="rs-app-header"><div class="wrap nav rs-top"><img src="/brands/ravenSharpLogo.png" alt="Raven Sharp"><div class="rs-brand">RAVEN <strong>SHARP</strong><small>Content Creator</small></div><a class="rs-nav-home" href="/">Features &amp; Pricing</a><div class="pill" id="user-pill">Checking account…</div></div></header>'
+          if old in s: s=s.replace(old,new,1)
+          elif 'class="rs-app-header"' not in s: raise SystemExit('Content header marker missing')
+          old2='<div id="login-card" class="card hidden" style="max-width:460px;margin:auto"><h2 id="auth-heading">Sign in</h2>'
+          new2='<div id="login-card" class="card hidden" style="max-width:460px;margin:auto"><div class="auth-raven"><img src="/brands/ravenCentre.png" alt=""></div><h2 id="auth-heading">Sign in</h2>'
+          if old2 in s: s=s.replace(old2,new2,1)
+          p.write_text(s)
+      - name: Sanity check
+        run: |
+          grep -q 'rs-app-header' studio-v2.html
+          grep -q 'auth-raven' studio-v2.html
+      - name: Commit
+        run: |
+          git config user.name 'Raven Repair Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add studio-v2.html
+          git diff --cached --quiet || (git commit -m 'Keep Raven Sharp design through Content Creator sign-in and studio' && git push)
