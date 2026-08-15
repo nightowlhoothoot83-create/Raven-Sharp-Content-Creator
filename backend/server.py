@@ -451,15 +451,27 @@ async def login(payload: LoginIn, response: Response):
         await db.users.update_one({"_id": user["_id"]}, {"$set": {"password_hash": stored_hash}, "$unset": {"password": "", "hashed_password": ""}})
     if not valid:
         raise HTTPException(401, "Invalid email or password")
-    if email == OWNER_EMAIL.lower() and user.get("tier") != "owner":
-        await db.users.update_one({"_id": user["_id"]}, {"$set": {"tier": "owner", "name": user.get("name") or "Emma James"}})
-        user["tier"] = "owner"
-        user["name"] = user.get("name") or "Emma James"
+    legacy_updates = {}
+    if not user.get("id"):
+        user["id"] = str(uuid.uuid4())
+        legacy_updates["id"] = user["id"]
+    if not user.get("created_at"):
+        user["created_at"] = datetime.now(timezone.utc).isoformat()
+        legacy_updates["created_at"] = user["created_at"]
+    if email == OWNER_EMAIL.lower():
+        if user.get("tier") != "owner":
+            user["tier"] = "owner"
+            legacy_updates["tier"] = "owner"
+        if not user.get("name"):
+            user["name"] = "Emma James"
+            legacy_updates["name"] = "Emma James"
+    if legacy_updates:
+        await db.users.update_one({"_id": user["_id"]}, {"$set": legacy_updates})
     access, refresh = make_access(user["id"], email), make_refresh(user["id"])
     set_cookies(response, access, refresh)
     return {"id": user["id"], "email": email, "name": user.get("name"),
             "tier": user.get("tier", "free"), "videos_this_month": user.get("videos_this_month", 0),
-            "created_at": user["created_at"]}
+            "created_at": user.get("created_at", datetime.now(timezone.utc).isoformat())}
 
 @api.post("/auth/logout")
 async def logout(response: Response):
@@ -471,7 +483,7 @@ async def logout(response: Response):
 async def me(user: dict = Depends(get_user)):
     return {"id": user["id"], "email": user["email"], "name": user.get("name"),
             "tier": user.get("tier", "free"), "videos_this_month": user.get("videos_this_month", 0),
-            "created_at": user["created_at"]}
+            "created_at": user.get("created_at", datetime.now(timezone.utc).isoformat())}
 
 @api.post("/auth/refresh")
 async def refresh_token(request: Request, response: Response):
