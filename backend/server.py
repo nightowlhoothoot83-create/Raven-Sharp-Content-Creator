@@ -1,5 +1,5 @@
 """
-Raven Sharp Video Creator — FastAPI Backend
+Raven Sharp Content Creator — FastAPI Backend
 AI-generated short-form video with per-user brand profiles + choice of
 generation provider (InVideo.ai / Higgsfield / Meta AI).
 Part of Ascension Digital Group
@@ -131,7 +131,7 @@ CORS_ORIGINS = [
 client = AsyncIOMotorClient(MONGO_URL)
 db     = client[DB_NAME]
 
-app = FastAPI(title="Raven Sharp Video Creator API")
+app = FastAPI(title="Raven Sharp Content Creator API")
 api = APIRouter(prefix="/api")
 
 app.add_middleware(
@@ -514,8 +514,8 @@ async def forgot_password(payload: ForgotPasswordIn):
     reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
     log.info(f"Password reset token for {email}: {token}")
     await send_email(
-        to=email, subject="Reset your Raven Sharp Video Creator password",
-        html=f"""<p>Someone requested a password reset for your Raven Sharp Video Creator account.</p>
+        to=email, subject="Reset your Raven Sharp Content Creator password",
+        html=f"""<p>Someone requested a password reset for your Raven Sharp Content Creator account.</p>
                  <p><a href="{reset_link}">Click here to reset your password</a> — this link expires in 1 hour.</p>
                  <p>If you didn't request this, you can safely ignore this email.</p>""",
     )
@@ -977,13 +977,13 @@ async def health_detailed():
 
 @api.get("/")
 async def root():
-    return {"service": "Raven Sharp Video Creator API", "status": "ok"}
+    return {"service": "Raven Sharp Content Creator API", "status": "ok"}
 
 app.include_router(api)
 
 @app.on_event("startup")
 async def startup():
-    log.info("Raven Sharp Video Creator API starting up. DB=%s", DB_NAME)
+    log.info("Raven Sharp Content Creator API starting up. DB=%s", DB_NAME)
 
 @app.on_event("shutdown")
 async def shutdown():
