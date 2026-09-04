@@ -2,6 +2,20 @@ const OWNER_EMAIL = "ascensiondigitalagency@outlook.com";
 const OWNER_NAME = "Emma James";
 const BACKEND_URL = "https://web-production-fb994.up.railway.app";
 
+async function withSharedFooter(response) {
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  let html = await response.text();
+  if (!html.includes('/adg-footer.js')) {
+    html = html.includes('</body>')
+      ? html.replace('</body>', '<script src="/adg-footer.js" defer></script></body>')
+      : html + '<script src="/adg-footer.js" defer></script>';
+  }
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -22,6 +36,6 @@ export default {
       }));
     }
 
-    return env.ASSETS.fetch(request);
+    return withSharedFooter(await env.ASSETS.fetch(request));
   }
 };
