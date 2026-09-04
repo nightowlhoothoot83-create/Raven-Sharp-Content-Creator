@@ -2,13 +2,13 @@
   if (document.getElementById('adg-group-footer')) return;
   const brands = [
     ['MyCalendarTools','https://mycalendartools.net/assets/perf/mycalendartools-logo.webp','https://mycalendartools.net'],
-    ['MyCalcTools','https://mycalendartools.net/assets/perf/mycalctools-logo.webp','https://mycalctools.net'],
-    ['Wheel Name Picker','https://mycalendartools.net/assets/perf/wheelnamepicker-logo.webp','https://wheelnamepicker.com.au'],
-    ['Raven Sharp','https://mycalendartools.net/assets/perf/raven-sharp.webp','https://raven-sharp.com'],
+    ['MyCalcTools','/brands/myCalcTools.png','https://mycalctools.net'],
+    ['Wheel Name Picker','/brands/wheelNamePicker.png','https://wheelnamepicker.com.au'],
+    ['Raven Sharp','/brands/ravenSharpLogo.png','https://raven-sharp.com'],
     ['Zyia Creations','https://mycalendartools.net/assets/perf/zyia-creations.webp','https://zyia-creations.printify.me/'],
-    ['ADG Downloads','https://mycalendartools.net/assets/perf/adg-downloads.webp','https://zyiacreations.etsy.com'],
+    ['ADG Downloads','/brands/adgDownloads.png','https://zyiacreations.etsy.com'],
     ['Feed the Feed','https://mycalendartools.net/assets/perf/feed-the-feed.webp','https://www.facebook.com/share/1HfyRTQtg1/'],
-    ['Spew Crew Kids','https://mycalendartools.net/assets/perf/spew-crew.webp','https://www.youtube.com/@spewcrewkids'],
+    ['Spew Crew Kids','/brands/spewCrew.png','https://www.youtube.com/@spewcrewkids'],
     ['Mystical Moments','https://mycalendartools.net/assets/perf/mystical-moments.webp','https://mysticalmoments.pages.dev']
   ];
   const style = document.createElement('style');
