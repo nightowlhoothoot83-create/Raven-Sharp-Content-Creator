@@ -1,5 +1,7 @@
 (() => {
   if (document.getElementById('adg-group-footer')) return;
+  const legacyFooter = document.querySelector('.rs-footer');
+  if (legacyFooter) legacyFooter.remove();
   const brands = [
     ['MyCalendarTools','https://mycalendartools.net/assets/perf/mycalendartools-logo.webp','https://mycalendartools.net'],
     ['MyCalcTools','/brands/myCalcTools.png','https://mycalctools.net'],
