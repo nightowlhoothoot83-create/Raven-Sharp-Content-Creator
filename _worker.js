@@ -2,11 +2,16 @@ const OWNER_EMAIL = "ascensiondigitalagency@outlook.com";
 const OWNER_NAME = "Emma James";
 const BACKEND_URL = "https://web-production-fb994.up.railway.app";
 
-async function withSharedFooter(response) {
+function shouldInjectSharedFooter(pathname) {
+  return pathname === '/' || pathname === '/index.html';
+}
+
+async function withSharedFooter(response, pathname) {
   const type = response.headers.get('content-type') || '';
-  if (!type.includes('text/html')) return response;
+  if (!type.includes('text/html') || !shouldInjectSharedFooter(pathname)) return response;
   let html = await response.text();
-  if (!html.includes('/adg-footer.js')) {
+  const alreadyHasFooter = html.includes('id="adg-group-footer"') || html.includes("id='adg-group-footer'");
+  if (!alreadyHasFooter && !html.includes('/adg-footer.js')) {
     html = html.includes('</body>')
       ? html.replace('</body>', '<script src="/adg-footer.js" defer></script></body>')
       : html + '<script src="/adg-footer.js" defer></script>';
@@ -36,6 +41,6 @@ export default {
       }));
     }
 
-    return withSharedFooter(await env.ASSETS.fetch(request));
+    return withSharedFooter(await env.ASSETS.fetch(request), url.pathname);
   }
 };
