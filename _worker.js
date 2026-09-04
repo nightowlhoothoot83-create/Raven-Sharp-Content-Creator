@@ -10,7 +10,8 @@ async function withSharedFooter(response, pathname) {
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html') || !shouldInjectSharedFooter(pathname)) return response;
   let html = await response.text();
-  if (!html.includes('/adg-footer.js')) {
+  const alreadyHasFooter = html.includes('id="adg-group-footer"') || html.includes('class="rs-footer"') || html.includes("class='rs-footer'");
+  if (!alreadyHasFooter && !html.includes('/adg-footer.js')) {
     html = html.includes('</body>')
       ? html.replace('</body>', '<script src="/adg-footer.js" defer></script></body>')
       : html + '<script src="/adg-footer.js" defer></script>';
