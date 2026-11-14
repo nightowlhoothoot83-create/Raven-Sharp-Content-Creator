@@ -1,0 +1,143 @@
+{
+  "campaign": "craft-fair-cost-check",
+  "audience": "craft fair sellers comparing event costs",
+  "affiliate": false,
+  "status": "prepared_not_published",
+  "posts": [
+    {
+      "platform": "pinterest",
+      "caption": "A busy stall can still lose money. Count stall fees, travel, materials and your time before booking your next craft fair. Compare your costs: https://mycalctools.net/craft-fair-profit-calculator?utm_source=pinterest&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "destination": "https://mycalctools.net/craft-fair-profit-calculator?utm_source=pinterest&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "status": "prepared",
+      "publication_id": null,
+      "published_url": null,
+      "clicks": null,
+      "conversions": null,
+      "required": [
+        "verified audience fit",
+        "reachable destination",
+        "public media URL",
+        "public board_id"
+      ]
+    },
+    {
+      "platform": "facebook",
+      "caption": "A busy stall can still lose money. Count stall fees, travel, materials and your time before booking your next craft fair. Compare your costs: https://mycalctools.net/craft-fair-profit-calculator?utm_source=facebook&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "destination": "https://mycalctools.net/craft-fair-profit-calculator?utm_source=facebook&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "status": "prepared",
+      "publication_id": null,
+      "published_url": null,
+      "clicks": null,
+      "conversions": null,
+      "required": [
+        "verified audience fit",
+        "reachable destination",
+        "public media URL"
+      ]
+    },
+    {
+      "platform": "instagram",
+      "caption": "A busy stall can still lose money. Count stall fees, travel, materials and your time before booking your next craft fair. Use the calculator through the link in the profile.",
+      "destination": "https://mycalctools.net/craft-fair-profit-calculator?utm_source=instagram&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "status": "prepared",
+      "publication_id": null,
+      "published_url": null,
+      "clicks": null,
+      "conversions": null,
+      "required": [
+        "verified audience fit",
+        "reachable destination",
+        "public media URL"
+      ]
+    },
+    {
+      "platform": "youtube",
+      "caption": "A busy stall can still lose money. Count stall fees, travel, materials and your time before booking your next craft fair. Use the calculator through the link in the profile.",
+      "destination": "https://mycalctools.net/craft-fair-profit-calculator?utm_source=youtube&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "status": "prepared",
+      "publication_id": null,
+      "published_url": null,
+      "clicks": null,
+      "conversions": null,
+      "required": [
+        "verified audience fit",
+        "reachable destination",
+        "public media URL"
+      ]
+    },
+    {
+      "platform": "tiktok",
+      "caption": "A busy stall can still lose money. Count stall fees, travel, materials and your time before booking your next craft fair. Use the calculator through the link in the profile.",
+      "destination": "https://mycalctools.net/craft-fair-profit-calculator?utm_source=tiktok&utm_medium=organic_social&utm_campaign=craft-fair-cost-check",
+      "status": "prepared",
+      "publication_id": null,
+      "published_url": null,
+      "clicks": null,
+      "conversions": null,
+      "required": [
+        "verified audience fit",
+        "reachable destination",
+        "public media URL"
+      ]
+    }
+  ],
+  "income": {
+    "pending": null,
+    "confirmed": null,
+    "received": null,
+    "currency": null
+  },
+  "video": {
+    "made_for_kids": false,
+    "title": "Craft fair sales are not profit",
+    "audio": "none; original on-screen captions"
+  },
+  "renderer_payload": {
+    "format": "portrait",
+    "title": "Craft fair cost check",
+    "slides": [
+      {
+        "headline": "Sales are not profit",
+        "body": "Before booking a craft fair, count every cost.",
+        "footer": "ADG | Event cost check"
+      },
+      {
+        "headline": "Count the cash costs",
+        "body": "Stall fee + travel + materials + packaging + payment fees.",
+        "footer": "ADG | Event cost check"
+      },
+      {
+        "headline": "Then count your time",
+        "body": "Setup, selling and packing hours affect whether an event is worth repeating.",
+        "footer": "ADG | Event cost check"
+      },
+      {
+        "headline": "Compare before booking",
+        "body": "Use the calculator. Save your assumptions. Compare events using the same inputs.",
+        "footer": "ADG | Event cost check"
+      }
+    ]
+  },
+  "assets": [
+    {
+      "file": "slide-01.png",
+      "sha256": "5a6737744af638d8127384b2a44e42a2f871533b39edab9775f91dda448358c0"
+    },
+    {
+      "file": "slide-02.png",
+      "sha256": "38fb35d50438889b9e60f80a6bca87edcb4edb822504543916071580942bd2db"
+    },
+    {
+      "file": "slide-03.png",
+      "sha256": "7e1fcb6ab827d5876ffae95986bdf9ef022d7cb8ce3e78d9c489143c99ee2a2a"
+    },
+    {
+      "file": "slide-04.png",
+      "sha256": "5e0cdc3f3e7e39e46b2a5536a5e67e2043cfce35a8e4198bc72a604608cd1eb8"
+    },
+    {
+      "file": "short.mp4",
+      "sha256": "b008cf86a62c3e18e2ea2a005c1a209925ecf3ee2659d258392fe76b54d2376b"
+    }
+  ]
+}
